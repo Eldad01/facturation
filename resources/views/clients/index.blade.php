@@ -56,6 +56,7 @@
                         <th>Nom</th>
                         <th>Prenom(s)</th>
                         <th>Telephone</th>
+                        <th class="d-none d-lg-table-cell">Email</th>
                         <th>Adresse</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -70,6 +71,7 @@
                                     <i class="bi bi-telephone me-1"></i>{{ $client->telephone }}
                                 </a>
                             </td>
+                            <td class="d-none d-lg-table-cell">{{ $client->email ?? '-' }}</td>
                             <td>{{ $client->adresse ?? '-' }}</td>
                             <td class="text-end">
                                 <div class="action-buttons justify-content-end">
@@ -100,7 +102,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5">
+                            <td colspan="6">
                                 <div class="empty-state">
                                     <i class="bi bi-people"></i>
                                     <h5>Aucun client trouve</h5>

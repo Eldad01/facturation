@@ -14,7 +14,8 @@ class LigneFacture extends Model
         'produit_id',
         'quantite',
         'prix_unitaire',
-        'total_ligne'
+        'total_ligne',
+        'remise'
     ];
 
     protected $table = 'lignes_facture';

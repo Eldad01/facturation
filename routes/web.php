@@ -9,6 +9,10 @@ use App\Http\Controllers\PdfController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\PaiementController;
+use App\Http\Controllers\FournisseurController;
+use App\Http\Controllers\CommandeAchatController;
+use App\Http\Controllers\ReceptionAchatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -71,6 +75,19 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Fournisseurs - Admin only
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('fournisseurs', FournisseurController::class);
+        Route::post('/fournisseurs/{fournisseur}/link-product', [FournisseurController::class, 'linkProduct'])
+            ->name('fournisseurs.link-product');
+        Route::delete('/fournisseurs/{fournisseur}/unlink-product/{produit}', [FournisseurController::class, 'unlinkProduct'])
+            ->name('fournisseurs.unlink-product');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | Produits - Employe (read-only + mouvements)
     |--------------------------------------------------------------------------
     */
@@ -117,6 +134,36 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings', [SettingController::class, 'edit'])
             ->name('settings.edit');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Commandes d'achat - Admin only
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:admin')->group(function () {
+        Route::resource('commandes-achat', CommandeAchatController::class)->names('commandes_achat');
+        Route::post('/commandes-achat/{commande}/add-ligne', [CommandeAchatController::class, 'addLigne'])
+            ->name('commandes_achat.add_ligne');
+        Route::delete('/commandes-achat/{commande}/remove-ligne/{ligne}', [CommandeAchatController::class, 'removeLigne'])
+            ->name('commandes_achat.remove_ligne');
+        Route::post('/commandes-achat/{commande}/confirm', [CommandeAchatController::class, 'confirm'])
+            ->name('commandes_achat.confirm');
+        Route::post('/commandes-achat/{commande}/cancel', [CommandeAchatController::class, 'cancel'])
+            ->name('commandes_achat.cancel');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Réceptions d'achat - Admin only
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/receptions-achat/{commande}/create', [ReceptionAchatController::class, 'create'])
+            ->name('receptions_achat.create');
+        Route::post('/receptions-achat/{commande}/store', [ReceptionAchatController::class, 'store'])
+            ->name('receptions_achat.store');
+        Route::get('/receptions-achat/{reception}', [ReceptionAchatController::class, 'show'])
+            ->name('receptions_achat.show');
+    });
         Route::put('/settings', [SettingController::class, 'update'])
             ->name('settings.update');
 
@@ -146,6 +193,15 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::resource('factures', FactureController::class);
+    Route::post('/factures/{facture}/paiements', [PaiementController::class, 'store'])
+        ->name('factures.paiements.store');
+
+    // Duplication et annulation
+    Route::post('/factures/{facture}/duplicate', [FactureController::class, 'duplicate'])
+        ->name('factures.duplicate');
+
+    Route::post('/factures/{facture}/annuler', [FactureController::class, 'annuler'])
+        ->name('factures.annuler');
 
     Route::put('/factures/{facture}/valider',
         [FactureController::class, 'valider'])

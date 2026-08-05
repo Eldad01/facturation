@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Paiement;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,9 +14,20 @@ class Facture extends Model
         'client_id',
         'user_id',
         'type_document',   // pro-forma | recu
+        'status',
         'numero_facture',
         'total',
-        'modifiable'
+        'montant_paye',
+        'date_echeance',
+        'date_paiement',
+        'modifiable',
+        'remise',
+        'tva'
+    ];
+
+    protected $casts = [
+        'date_echeance' => 'date',
+        'date_paiement' => 'date',
     ];
 
     public function client()
@@ -31,6 +43,31 @@ class Facture extends Model
     public function lignes()
     {
         return $this->hasMany(LigneFacture::class);
+    }
+
+    public function paiements()
+    {
+        return $this->hasMany(Paiement::class);
+    }
+
+    public function getBalanceAttribute()
+    {
+        return max(0, $this->total - $this->montant_paye);
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->status === 'payee' || $this->balance <= 0;
+    }
+
+    public function isPartiallyPaid(): bool
+    {
+        return $this->status === 'partiellement_payee';
+    }
+
+    public function isOverdue(): bool
+    {
+        return $this->date_echeance && now()->gt($this->date_echeance) && !$this->isPaid();
     }
 
     public function isDefinitive()

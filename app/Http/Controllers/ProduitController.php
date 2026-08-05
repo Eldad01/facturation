@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\Produit;
 use App\Models\MouvementStock;
@@ -30,17 +31,34 @@ class ProduitController extends Controller
     {
         $request->validate([
             'nom' => 'required|string|max:255|unique:produits,nom',
+            'sku' => 'nullable|string|max:100|unique:produits,sku',
+            'categorie' => 'nullable|string|max:100',
+            'famille' => 'nullable|string|max:100',
+            'unite' => 'nullable|string|max:50',
+            'description' => 'nullable|string|max:1000',
+            'photo' => 'nullable|image|max:2048',
             'prix_achat' => 'required|integer|min:1',
             'prix_vente' => 'required|integer|min:1',
             'stock' => 'required|integer|min:0',
             'seuil_alerte' => 'required|integer|min:0',
         ], [
-            'nom.unique' => 'Ce produit existe déjà.'
+            'nom.unique' => 'Ce produit existe déjà.',
+            'sku.unique' => 'Ce SKU est déjà utilisé.',
         ]);
 
-        // Convert to integers for XOF currency
+        $photoPath = null;
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('product_photos', 'public');
+        }
+
         $produit = Produit::create([
             'nom' => $request->nom,
+            'sku' => $request->sku,
+            'categorie' => $request->categorie,
+            'famille' => $request->famille,
+            'unite' => $request->unite,
+            'description' => $request->description,
+            'photo' => $photoPath,
             'prix_achat' => (int) $request->prix_achat,
             'prix_vente' => (int) $request->prix_vente,
             'stock' => (int) $request->stock,
@@ -81,6 +99,17 @@ class ProduitController extends Controller
                 'max:255',
                 Rule::unique('produits', 'nom')->ignore($produit->id),
             ],
+            'sku' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('produits', 'sku')->ignore($produit->id),
+            ],
+            'categorie' => 'nullable|string|max:100',
+            'famille' => 'nullable|string|max:100',
+            'unite' => 'nullable|string|max:50',
+            'description' => 'nullable|string|max:1000',
+            'photo' => 'nullable|image|max:2048',
             'prix_achat' => 'required|integer|min:0',
             'prix_vente' => 'required|integer|min:0',
             'seuil_alerte' => 'required|integer|min:0',
@@ -89,15 +118,34 @@ class ProduitController extends Controller
 
         $oldData = [
             'nom' => $produit->nom,
+            'sku' => $produit->sku,
+            'categorie' => $produit->categorie,
+            'famille' => $produit->famille,
+            'unite' => $produit->unite,
+            'description' => $produit->description,
             'prix_achat' => $produit->prix_achat,
             'prix_vente' => $produit->prix_vente,
             'stock' => $produit->stock_actuel,
             'seuil_alerte' => $produit->seuil_alerte,
         ];
 
+        $photoPath = $produit->photo;
+        if ($request->hasFile('photo')) {
+            if ($photoPath) {
+                Storage::disk('public')->delete($photoPath);
+            }
+            $photoPath = $request->file('photo')->store('product_photos', 'public');
+        }
+
         // Convert to integers for XOF currency
         $produit->update([
             'nom' => $request->nom,
+            'sku' => $request->sku,
+            'categorie' => $request->categorie,
+            'famille' => $request->famille,
+            'unite' => $request->unite,
+            'description' => $request->description,
+            'photo' => $photoPath,
             'prix_achat' => (int) $request->prix_achat,
             'prix_vente' => (int) $request->prix_vente,
             'seuil_alerte' => (int) $request->seuil_alerte,

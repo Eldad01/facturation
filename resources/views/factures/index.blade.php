@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Documents')
+@section('title', 'Factures')
 
 @section('content')
 {{-- Page Header --}}
 <div class="page-header">
     <div>
-        <h1 class="page-title">Documents</h1>
+        <h1 class="page-title">Factures</h1>
         <p class="page-subtitle d-none d-sm-block">Gestion des recus et devis</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
@@ -49,6 +49,8 @@
                 <th class="small">Numero</th>
                 <th class="small">Client</th>
                 <th class="small">Type</th>
+                <th class="small">Statut</th>
+                <th class="small">Échéance</th>
                 <th class="small">Total</th>
                 <th class="text-end small">Actions</th>
             </tr>
@@ -66,6 +68,18 @@
                             <span class="badge bg-success">R</span>
                         @endif
                     </td>
+                    <td>
+                        @if($facture->status === 'payee')
+                            <span class="badge bg-success">Payée</span>
+                        @elseif($facture->status === 'partiellement_payee')
+                            <span class="badge bg-info text-dark">Partielle</span>
+                        @elseif($facture->status === 'recu')
+                            <span class="badge bg-success">Reçu</span>
+                        @else
+                            <span class="badge bg-warning text-dark">{{ ucfirst(str_replace('_', ' ', $facture->status)) }}</span>
+                        @endif
+                    </td>
+                    <td>{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
                     <td class="fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }}</td>
                     <td class="text-end">
                         <div class="btn-group btn-group-sm" role="group">
@@ -74,6 +88,22 @@
                                title="Voir">
                                 <i class="bi bi-eye"></i>
                             </a>
+                            <a href="{{ route('pdf.generate', $facture->id) }}"
+                               class="btn btn-sm btn-outline-secondary"
+                               title="PDF">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </a>
+
+                            @if(auth()->user()->isAdmin() || $facture->user_id === auth()->id())
+                                <form action="{{ route('factures.duplicate', $facture->id) }}"
+                                      method="POST"
+                                      class="d-inline">
+                                    @csrf
+                                    <button class="btn btn-sm btn-outline-secondary" title="Dupliquer">
+                                        <i class="bi bi-files"></i>
+                                    </button>
+                                </form>
+                            @endif
 
                             @if($facture->type_document === 'pro-forma')
                                 @if(auth()->user()->isAdmin() || $facture->user_id === auth()->id())
@@ -100,7 +130,7 @@
                                         <form action="{{ route('factures.destroy', $facture->id) }}"
                                               method="POST"
                                               class="d-inline"
-                                              onsubmit="return confirm('Supprimer ce document ?');">
+                                              onsubmit="return confirm('Supprimer cette facture ?');">
                                             @csrf
                                             @method('DELETE')
                                             <button class="btn btn-sm btn-danger" title="Supprimer">
@@ -116,7 +146,7 @@
             @empty
                 <tr>
                     <td colspan="5" class="text-center py-3 text-muted small">
-                        Aucun document trouve.
+                        Aucune facture trouvee.
                     </td>
                 </tr>
             @endforelse
@@ -125,21 +155,7 @@
 </div>
     @if($factures->hasPages())
     <div class="card-footer bg-white">
-        <nav>
-            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
-                @foreach ($factures->links()->elements as $element)
-                    @if (is_array($element))
-                        @foreach ($element as $page => $url)
-                            @if ($page == $factures->currentPage())
-                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
-                            @else
-                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
-                            @endif
-                        @endforeach
-                    @endif
-                @endforeach
-            </ul>
-        </nav>
+        {{ $factures->links() }}
     </div>
     @endif
 

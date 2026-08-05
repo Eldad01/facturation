@@ -132,6 +132,20 @@
                                             value="{{ old('national_motto', $settings?->national_motto) }}">
                                     </div>
                                 </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="tva_default" class="form-label">
+                                        <i class="bi bi-percent me-1 text-info"></i>Taux de TVA par defaut (%)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-info-subtle"><i class="bi bi-percent text-info"></i></span>
+                                        <input type="number" step="0.01" name="tva_default" id="tva_default" class="form-control @error('tva_default') is-invalid @enderror"
+                                            value="{{ old('tva_default', $settings?->tva_default ?? 0) }}">
+                                        @error('tva_default')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="d-grid mt-4">

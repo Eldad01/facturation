@@ -25,7 +25,7 @@
     <h1>Rapport de ventes - {{ ucfirst($period) }}</h1>
     <h3>Période : {{ $start->format('d/m/Y') }} à {{ $end->format('d/m/Y') }}</h3>
     <h3>Nombre de factures : {{ $factures->count() }}</h3>
-    <h3>Total encaissé : {{ number_format($total, 2, ',', ' ') }} FCFA</h3>
+    <h3>Total encaissé : {{ number_format($total, 2, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</h3>
 
     <hr class="mt-2 mb-2">
 
@@ -45,8 +45,8 @@
                 <tr>
                     <th>Produit</th>
                     <th>Quantité</th>
-                    <th>Prix unitaire (FCFA)</th>
-                    <th>Total ligne (FCFA)</th>
+                    <th>Prix unitaire ({{ $app_settings->devise ?? 'FCFA' }})</th>
+                    <th>Total ligne ({{ $app_settings->devise ?? 'FCFA' }})</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,13 +61,13 @@
             </tbody>
         </table>
 
-        <p class="text-right fw-bold">Total facture : {{ number_format($facture->total, 2, ',', ' ') }} FCFA</p>
+        <p class="text-right fw-bold">Total facture : {{ number_format($facture->total, 2, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</p>
         <hr class="mt-2 mb-2">
     @empty
         <p>Aucune facture enregistrée pour cette période.</p>
     @endforelse
 
-    <h3>Total général : {{ number_format($total, 2, ',', ' ') }} FCFA</h3>
+    <h3>Total général : {{ number_format($total, 2, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</h3>
 
 </body>
 </html>

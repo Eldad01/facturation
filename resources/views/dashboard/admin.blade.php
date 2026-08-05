@@ -123,7 +123,7 @@
                                             @endif
                                         </td>
                                         <td>{{ $facture->client->nom ?? '-' }}</td>
-                                        <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} CFA</td>
+                                        <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return value.toLocaleString() + ' CFA';
+                                return value.toLocaleString() + ' {{ $app_settings->devise ?? 'FCFA' }}';
                             }
                         }
                     }

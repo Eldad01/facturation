@@ -8,6 +8,12 @@ class Produit extends Model
 {
     protected $fillable = [
         'nom',
+        'sku',
+        'categorie',
+        'famille',
+        'unite',
+        'description',
+        'photo',
         'prix_achat',
         'prix_vente',
         'stock',

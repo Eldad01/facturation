@@ -995,7 +995,7 @@
                     <a class="nav-link {{ request()->routeIs('factures*') ? 'active' : '' }}" 
                        href="{{ route('factures.index') }}">
                         <i class="bi bi-file-text"></i>
-                        <span>Documents</span>
+                        <span>Factures</span>
                     </a>
                 </li>
 

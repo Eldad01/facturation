@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Modifier le document')
+@section('title', 'Modifier la facture')
 
 @section('content')
 {{-- Page Header --}}
 <div class="page-header">
     <div>
-        <h1 class="page-title">Modifier le document</h1>
+        <h1 class="page-title">Modifier la facture</h1>
         <p class="page-subtitle">{{ $facture->numero_facture }}</p>
     </div>
 </div>
@@ -53,23 +53,37 @@
                         </div>
 
                         <div class="col-12 col-md-6">
-                            <label for="type_document" class="form-label">Type de document</label>
-                            <select name="type_document" 
-                                    id="type_document" 
-                                    class="form-select @error('type_document') is-invalid @enderror" 
-                                    required>
-                                <option value="pro-forma" {{ $facture->type_document=='pro-forma'?'selected':'' }}>Pro-forma</option>
-                                <option value="recu" {{ $facture->type_document=='recu'?'selected':'' }}>Recu</option>
-                            </select>
-                            @error('type_document')
+                            <label class="form-label">Type de facture</label>
+                            <input type="text" class="form-control" value="{{ $facture->type_document === 'pro-forma' ? 'Pro-forma' : 'Reçu' }}" disabled>
+                            <input type="hidden" name="type_document" value="{{ $facture->type_document }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label for="date_echeance" class="form-label">Date d'échéance</label>
+                            <input type="date"
+                                   name="date_echeance"
+                                   id="date_echeance"
+                                   class="form-control @error('date_echeance') is-invalid @enderror"
+                                   value="{{ old('date_echeance', $facture->date_echeance?->format('Y-m-d')) }}">
+                            @error('date_echeance')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label for="remise" class="form-label">Remise facture</label>
+                            <input type="number" step="0.01" name="remise" id="remise" class="form-control" value="{{ old('remise', $facture->remise ?? 0) }}">
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label for="tva" class="form-label">TVA (%)</label>
+                            <input type="number" step="0.01" name="tva" id="tva" class="form-control" value="{{ old('tva', $facture->tva ?? 0) }}">
                         </div>
                     </div>
 
                     <hr class="my-4">
 
-                    <h5 class="mb-3"><i class="bi bi-list-ul me-2"></i>Lignes du document</h5>
+                    <h5 class="mb-3"><i class="bi bi-list-ul me-2"></i>Lignes de la facture</h5>
 
                     {{-- Lines Table --}}
                     <div class="table-responsive mb-3">
@@ -79,6 +93,7 @@
                                     <th style="min-width:150px;">Produit</th>
                                     <th style="min-width:80px;">Qte</th>
                                     <th style="min-width:100px;">Prix</th>
+                                    <th style="min-width:100px;">Remise</th>
                                     <th style="min-width:100px;">Total</th>
                                     <th style="width:50px;"></th>
                                 </tr>
@@ -91,14 +106,20 @@
                                         </td>
                                     </tr>
                                 @enderror
-                                @foreach($facture->lignes as $i => $ligne)
+                                @php $editLignes = old('lignes', $facture->lignes->toArray()); @endphp
+                                @foreach($editLignes as $i => $ligne)
+                                    @php
+                                        $produitId = data_get($ligne, 'produit_id');
+                                        $quantite = data_get($ligne, 'quantite', 1);
+                                        $prix = data_get($ligne, 'prix_unitaire', 0);
+                                    @endphp
                                     <tr class="@error("lignes.$i.quantite") table-danger @enderror">
                                         <td>
                                             <select name="lignes[{{$i}}][produit_id]" class="form-select select-produit" required>
                                                 <option value="">-- Selectionner --</option>
                                                 @foreach($produits as $produit)
                                                     <option value="{{ $produit->id }}" data-prix="{{ $produit->prix_vente }}"
-                                                        {{ $ligne->produit_id == $produit->id ? 'selected' : '' }}>
+                                                        {{ $produitId == $produit->id ? 'selected' : '' }}>
                                                         {{ $produit->nom }}
                                                     </option>
                                                 @endforeach
@@ -108,20 +129,26 @@
                                             <input type="number"
                                                 name="lignes[{{$i}}][quantite]"
                                                 class="form-control quantite @error("lignes.$i.quantite") is-invalid @enderror"
-                                                value="{{ $ligne->quantite }}"
+                                                value="{{ $quantite }}"
                                                 min="1" required>
                                         </td>
                                         <td>
                                             <input type="number" 
                                                    name="lignes[{{$i}}][prix_unitaire]" 
                                                    class="form-control prix" 
-                                                   value="{{ $ligne->prix_unitaire }}" 
+                                                   value="{{ $prix }}" 
                                                    readonly>
+                                        </td>
+                                        <td>
+                                            <input type="number" step="0.01"
+                                                   name="lignes[{{$i}}][remise]"
+                                                   class="form-control remise_ligne"
+                                                   value="{{ $ligne['remise'] ?? 0 }}">
                                         </td>
                                         <td>
                                             <input type="text" 
                                                    class="form-control total_ligne" 
-                                                   value="{{ $ligne->quantite * $ligne->prix_unitaire }}" 
+                                                   value="{{ ($quantite * $prix) - ($ligne['remise'] ?? 0) }}" 
                                                    readonly>
                                         </td>
                                         <td class="text-center">
@@ -142,7 +169,7 @@
                         
                         <div class="text-end">
                             <span class="text-muted d-block" style="font-size: 0.75rem;">Total</span>
-                            <span class="h5 mb-0 fw-bold"><span id="total_facture">0</span> CFA</span>
+                            <span class="h5 mb-0 fw-bold"><span id="total_facture">0</span> {{ $app_settings->devise ?? 'FCFA' }}</span>
                         </div>
                     </div>
 
@@ -172,16 +199,20 @@ $(document).ready(function() {
     });
 });
 
-let index = {{ count($facture->lignes) }};
+let index = {{ count(old('lignes', $facture->lignes->toArray())) }};
 const produitsData = @json($produits);
 
 function recalculTotalGlobal(){
-    let total = 0;
+    let subtotal = 0;
     document.querySelectorAll('#lignes_table tbody tr').forEach(r => {
         if (r.querySelector('.total_ligne')) {
-            total += parseInt(r.querySelector('.total_ligne').value || 0);
+            subtotal += parseFloat(r.querySelector('.total_ligne').value || 0);
         }
     });
+    const invoiceRemise = parseFloat(document.getElementById('remise')? document.getElementById('remise').value || 0 : 0);
+    const tva = parseFloat(document.getElementById('tva')? document.getElementById('tva').value || 0 : 0);
+    let totalHt = Math.max(0, subtotal - invoiceRemise);
+    let total = Math.round(totalHt * (1 + (tva/100)));
     document.getElementById('total_facture').innerText = total.toLocaleString('fr-FR');
 }
 
@@ -198,6 +229,7 @@ document.getElementById('add_ligne').addEventListener('click', () => {
         <td><select name="lignes[${index}][produit_id]" class="form-select form-select-sm select-produit" required>${options}</select></td>
         <td><input type="number" name="lignes[${index}][quantite]" class="form-control form-control-sm quantite" value="1" min="1" required></td>
         <td><input type="number" name="lignes[${index}][prix_unitaire]" class="form-control form-control-sm prix" value="0" readonly></td>
+        <td><input type="number" step="0.01" name="lignes[${index}][remise]" class="form-control form-control-sm remise_ligne" value="0"></td>
         <td><input type="text" class="form-control form-control-sm total_ligne" value="0" readonly></td>
         <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove_ligne"><i class="bi bi-trash"></i></button></td>
     `;
@@ -214,7 +246,8 @@ document.addEventListener('change', e => {
         prixInput.value = selectedOption.dataset.prix || 0;
 
         const q = parseInt(row.querySelector('.quantite').value || 0);
-        row.querySelector('.total_ligne').value = q * prixInput.value;
+        const remise = parseFloat(row.querySelector('.remise_ligne')? row.querySelector('.remise_ligne').value || 0 : 0);
+        row.querySelector('.total_ligne').value = (q * prixInput.value) - remise;
 
         recalculTotalGlobal();
     }
@@ -225,7 +258,19 @@ document.addEventListener('input', e => {
         const row = e.target.closest('tr');
         const q = parseInt(row.querySelector('.quantite').value || 0);
         const p = parseInt(row.querySelector('.prix').value || 0);
-        row.querySelector('.total_ligne').value = q * p;
+        const remise = parseFloat(row.querySelector('.remise_ligne')? row.querySelector('.remise_ligne').value || 0 : 0);
+        row.querySelector('.total_ligne').value = (q * p) - remise;
+        recalculTotalGlobal();
+    }
+    if (e.target.classList.contains('remise_ligne')) {
+        const row = e.target.closest('tr');
+        const q = parseInt(row.querySelector('.quantite').value || 0);
+        const p = parseInt(row.querySelector('.prix').value || 0);
+        const remise = parseFloat(e.target.value || 0);
+        row.querySelector('.total_ligne').value = (q * p) - remise;
+        recalculTotalGlobal();
+    }
+    if (e.target.id === 'remise' || e.target.id === 'tva') {
         recalculTotalGlobal();
     }
 });

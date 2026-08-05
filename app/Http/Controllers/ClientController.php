@@ -39,10 +39,11 @@ class ClientController extends Controller
             'nom' => ['required', 'string', 'max:255', 'regex:/^[A-Za-zÀ-ÿ\'\- ]+$/'],
             'prenom' => ['required', 'string', 'max:255', 'regex:/^[A-Za-zÀ-ÿ\'\- ]+$/'],
             'telephone' => ['required', 'string', 'max:20', 'unique:clients,telephone', 'regex:/^\+?\d+$/'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:clients,email'],
             'adresse' => 'nullable|string|max:255',
         ]);
 
-        $data = $request->only('nom', 'prenom', 'telephone', 'adresse');
+        $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse');
         $data['nom'] = strtoupper($data['nom']);
         $data['prenom'] = ucfirst(strtolower($data['prenom']));
 
@@ -68,6 +69,7 @@ class ClientController extends Controller
             'nom' => ['required', 'string', 'max:255', 'regex:/^[A-Za-zÀ-ÿ\'\- ]+$/'],
             'prenom' => ['required', 'string', 'max:255', 'regex:/^[A-Za-zÀ-ÿ\'\- ]+$/'],
             'telephone' => ['required', 'string', 'max:20', 'unique:clients,telephone,' . $client->id, 'regex:/^\+?\d+$/'],
+            'email' => ['nullable', 'email', 'max:255', 'unique:clients,email,' . $client->id],
             'adresse' => 'nullable|string|max:255',
         ]);
 
@@ -75,9 +77,10 @@ class ClientController extends Controller
             'nom' => $client->nom,
             'prenom' => $client->prenom,
             'telephone' => $client->telephone,
+            'email' => $client->email,
         ];
 
-        $data = $request->only('nom', 'prenom', 'telephone', 'adresse');
+        $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse');
         $data['nom'] = strtoupper($data['nom']);
         $data['prenom'] = ucfirst(strtolower($data['prenom']));
 

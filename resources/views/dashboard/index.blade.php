@@ -54,7 +54,7 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-value">{{ number_format($recuMonthSum, 0, ',', ' ') }}</div>
-                    <div class="stat-label">Encaissement (CFA)</div>
+                    <div class="stat-label">Encaissement ({{ $app_settings->devise ?? 'FCFA' }})</div>
                 </div>
                 <div class="stat-icon bg-success-subtle text-success">
                     <i class="bi bi-currency-exchange"></i>
@@ -132,7 +132,7 @@
 {{-- Recent Invoices --}}
 <div class="modern-card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-file-text me-2"></i>Documents recents</span>
+        <span><i class="bi bi-file-text me-2"></i>Factures recentes</span>
         <a href="{{ route('factures.index') }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-right"></i> Voir tout
         </a>
@@ -163,7 +163,7 @@
                                         <span class="badge bg-warning-subtle text-warning">Pro-forma</span>
                                     @endif
                                 </td>
-                                <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} CFA</td>
+                                <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                 <td class="text-muted">{{ $facture->created_at->format('d/m/Y') }}</td>
                                 <td>
                                     <a href="{{ route('factures.show', $facture->id) }}" class="btn btn-sm btn-outline-primary">
@@ -178,8 +178,8 @@
         @else
             <div class="empty-state">
                 <i class="bi bi-file-text"></i>
-                <h5>Aucun document</h5>
-                <p class="text-muted">Aucun document trouve.</p>
+                <h5>Aucune facture</h5>
+                <p class="text-muted">Aucune facture trouvee.</p>
                 <a href="{{ route('factures.create') }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-lg me-1"></i>Creer un recu
                 </a>
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
-                                return value.toLocaleString() + ' CFA';
+                                return value.toLocaleString() + ' {{ $app_settings->devise ?? 'FCFA' }}';
                             }
                         }
                     }

@@ -26,6 +26,7 @@
                 <thead>
                     <tr>
                         <th class="small">Nom</th>
+                        <th class="text-muted small d-none d-md-table-cell">SKU</th>
                         <th class="text-end small">Prix vente</th>
                         <th class="text-end small d-none d-md-table-cell">Prix achat</th>
                         <th class="text-center small">Stock</th>
@@ -37,6 +38,7 @@
                     @forelse($produits as $produit)
                         <tr class="{{ $produit->enAlerte() ? 'table-warning' : '' }}">
                             <td class="fw-semibold">{{ $produit->nom }}</td>
+                            <td class="text-muted d-none d-md-table-cell">{{ $produit->sku ?? '-' }}</td>
                             <td class="text-end">{{ number_format($produit->prix_vente, 0, ',', ' ') }}</td>
                             <td class="text-end text-muted d-none d-md-table-cell">{{ number_format($produit->prix_achat, 0, ',', ' ') }}</td>
                             <td class="text-center">
@@ -62,6 +64,11 @@
                                     </a>
                                     @auth
                                         @if(auth()->user()->isAdmin())
+                                            <a href="{{ route('produits.edit', $produit->id) }}"
+                                               class="btn btn-sm btn-outline-warning"
+                                               title="Modifier">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
                                             <a href="{{ route('produits.reapprovisionnement', $produit->id) }}"
                                                class="btn btn-sm btn-outline-success"
                                                title="Reapprovisionner">

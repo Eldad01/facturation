@@ -46,10 +46,15 @@ class FactureController extends Controller
         $request->validate([
             'client_id' => 'required|exists:clients,id',
             'type_document' => 'required|in:pro-forma,recu',
+            'status' => 'nullable|in:brouillon,pro-forma,recu',
+            'date_echeance' => 'nullable|date|after_or_equal:today',
+            'tva' => 'nullable|numeric|min:0|max:100',
+            'remise' => 'nullable|numeric|min:0',
             'lignes' => 'required|array|min:1',
             'lignes.*.produit_id' => 'required|exists:produits,id',
             'lignes.*.quantite' => 'required|integer|min:1',
             'lignes.*.prix_unitaire' => 'required|numeric|min:0',
+            'lignes.*.remise' => 'nullable|numeric|min:0',
         ]);
 
         $produitIds = collect($request->lignes)->pluck('produit_id');
@@ -83,25 +88,34 @@ class FactureController extends Controller
 
         /* TRANSACTION PROPRE */
         $facture = DB::transaction(function () use ($request, $client) {
+            $status = $request->input('status') ?? ($request->type_document === 'recu' ? 'recu' : 'pro-forma');
+
             $facture = Facture::create([
                 'client_id' => $request->client_id,
                 'user_id' => auth()->id(),
                 'type_document' => $request->type_document,
+                'status' => $status,
+                'date_echeance' => $request->date_echeance,
                 'numero_facture' => Facture::generateNumeroFor($request->type_document),
                 'total' => 0,
+                'montant_paye' => 0,
                 'modifiable' => true,
+                'remise' => $request->remise ?? 0,
+                'tva' => $request->tva ?? 0,
             ]);
 
-            $total = 0;
+            $subtotal = 0;
 
             foreach ($request->lignes as $ligne) {
                 // Cast to integer for XOF currency (no decimals)
                 $quantite = (int) $ligne['quantite'];
                 // Remove any non-numeric characters except digits
                 $prixUnitaire = (int) preg_replace('/[^0-9]/', '', $ligne['prix_unitaire']);
-                $totalLigne = $quantite * $prixUnitaire;
+                $remiseLigne = isset($ligne['remise']) ? (float) $ligne['remise'] : 0.0;
+
+                $totalLigne = max(0, ($quantite * $prixUnitaire) - $remiseLigne);
                 
-                $total += $totalLigne;
+                $subtotal += $totalLigne;
 
                 LigneFacture::create([
                     'facture_id' => $facture->id,
@@ -109,6 +123,7 @@ class FactureController extends Controller
                     'quantite' => $quantite,
                     'prix_unitaire' => $prixUnitaire,
                     'total_ligne' => (int) $totalLigne,
+                    'remise' => $remiseLigne,
                 ]);
 
                 if ($request->type_document === 'recu') {
@@ -118,10 +133,23 @@ class FactureController extends Controller
                         'quantite' => $quantite,
                         'raison' => "Vente facture {$facture->numero_facture}",
                     ]);
+
+                    $produitLigne = Produit::find($ligne['produit_id']);
+                    ActivityLogger::stockUpdate(
+                        $produitLigne,
+                        "Vente de {$produitLigne->nom} - Facture {$facture->numero_facture}",
+                        $quantite
+                    );
                 }
             }
 
-            $facture->update(['total' => $total]);
+            $invoiceRemise = (float) ($request->remise ?? 0);
+            $tva = (float) ($request->tva ?? 0);
+
+            $totalHt = max(0, $subtotal - $invoiceRemise);
+            $totalTtc = round($totalHt * (1 + $tva / 100));
+
+            $facture->update(['total' => $totalTtc]);
 
             return $facture;
         });
@@ -174,11 +202,16 @@ class FactureController extends Controller
                     'quantite' => $ligne['quantite'],
                     'raison' => "Validation facture {$facture->numero_facture}",
                 ]);
+
+                ActivityLogger::stockUpdate(
+                    $ligne->produit,
+                    "Validation - vente de {$ligne->produit->nom} - Facture {$facture->numero_facture}",
+                    $ligne->quantite
+                );
             }
 
             $facture->update([
-                'type_document' => 'recu',
-                'numero_facture' => Facture::generateNumeroFor('recu'),
+                'type_document' => 'recu',                'status' => 'recu',                'numero_facture' => Facture::generateNumeroFor('recu'),
                 'modifiable' => false,
             ]);
         });
@@ -198,7 +231,7 @@ class FactureController extends Controller
 
     public function show(Facture $facture)
     {
-        $facture->load('client', 'lignes.produit', 'user');
+        $facture->load('client', 'lignes.produit', 'user', 'paiements');
         return view('factures.show', compact('facture'));
     }
 
@@ -206,8 +239,8 @@ class FactureController extends Controller
     {
         // Only admin can edit any facture
         if (auth()->user()->isAdmin()) {
-            if ($facture->isDefinitive()) {
-                return back()->with('error', 'Un reçu ne peut pas être modifié.');
+            if ($facture->isDefinitive() || $facture->status === 'annule') {
+                return back()->with('error', $facture->status === 'annule' ? 'Une facture annulée ne peut pas être modifiée.' : 'Un reçu ne peut pas être modifié.');
             }
             return view('factures.edit', [
                 'facture' => $facture->load('lignes.produit'),
@@ -263,17 +296,21 @@ class FactureController extends Controller
                 return back()->with('error', 'Vous ne pouvez pas modifier une facture après le jour de création.');
             }
         } else {
-            if ($facture->isDefinitive()) {
-                return back()->with('error', 'Un reçu ne peut pas être modifié.');
+            if ($facture->isDefinitive() || $facture->status === 'annule') {
+                return back()->with('error', $facture->status === 'annule' ? 'Une facture annulée ne peut pas être modifiée.' : 'Un reçu ne peut pas être modifié.');
             }
         }
 
         $request->validate([
             'client_id' => 'required|exists:clients,id',
+            'status' => 'nullable|in:brouillon,pro-forma,recu',
+            'tva' => 'nullable|numeric|min:0|max:100',
+            'remise' => 'nullable|numeric|min:0',
             'lignes' => 'required|array|min:1',
             'lignes.*.produit_id' => 'required|exists:produits,id',
             'lignes.*.quantite' => 'required|integer|min:1',
             'lignes.*.prix_unitaire' => 'required|numeric|min:0',
+            'lignes.*.remise' => 'nullable|numeric|min:0',
         ]);
 
         $oldData = [
@@ -283,20 +320,23 @@ class FactureController extends Controller
         ];
 
         $client = Client::find($request->client_id);
+        $updatedTotal = 0;
 
-        DB::transaction(function () use ($request, $facture) {
+        DB::transaction(function () use ($request, $facture, &$updatedTotal) {
             $facture->lignes()->delete();
 
-            $total = 0;
+            $subtotal = 0;
 
             foreach ($request->lignes as $ligne) {
                 // Cast to integer for XOF currency (no decimals)
                 $quantite = (int) $ligne['quantite'];
                 // Remove any non-numeric characters except digits
                 $prixUnitaire = (int) preg_replace('/[^0-9]/', '', $ligne['prix_unitaire']);
-                $totalLigne = $quantite * $prixUnitaire;
+                $remiseLigne = isset($ligne['remise']) ? (float) $ligne['remise'] : 0.0;
+
+                $totalLigne = max(0, ($quantite * $prixUnitaire) - $remiseLigne);
                 
-                $total += $totalLigne;
+                $subtotal += $totalLigne;
 
                 LigneFacture::create([
                     'facture_id' => $facture->id,
@@ -304,12 +344,24 @@ class FactureController extends Controller
                     'quantite' => $quantite,
                     'prix_unitaire' => $prixUnitaire,
                     'total_ligne' => (int) $totalLigne,
+                    'remise' => $remiseLigne,
                 ]);
             }
 
+            $invoiceRemise = (float) ($request->remise ?? 0);
+            $tva = (float) ($request->tva ?? 0);
+
+            $totalHt = max(0, $subtotal - $invoiceRemise);
+            $totalTtc = round($totalHt * (1 + $tva / 100));
+            $updatedTotal = $totalTtc;
+
             $facture->update([
                 'client_id' => $request->client_id,
-                'total' => $total,
+                'total' => $totalTtc,
+                'date_echeance' => $request->date_echeance,
+                'remise' => $invoiceRemise,
+                'tva' => $tva,
+                'status' => $request->input('status', $facture->status),
             ]);
         });
 
@@ -317,11 +369,85 @@ class FactureController extends Controller
         ActivityLogger::updated(
             $facture,
             "Mise à jour facture {$facture->numero_facture} pour {$client->nomComplet}",
-            (float) ($total - $oldData['total']),
+            (float) ($updatedTotal - $oldData['total']),
             $oldData
         );
 
         return redirect()->route('factures.index')->with('success', 'Facture mise à jour.');
+    }
+
+    public function duplicate(Facture $facture)
+    {
+        // Only allow admin or owner to duplicate
+        if (!auth()->user()->isAdmin() && $facture->user_id !== auth()->id()) {
+            return back()->with('error', 'Vous ne pouvez pas dupliquer cette facture.');
+        }
+
+        $new = DB::transaction(function () use ($facture) {
+            $copy = $facture->replicate();
+            $copy->numero_facture = Facture::generateNumeroFor($facture->type_document);
+            $copy->status = 'brouillon';
+            $copy->montant_paye = 0;
+            $copy->modifiable = true;
+            $copy->created_at = now();
+            $copy->updated_at = now();
+            $copy->push();
+
+            foreach ($facture->lignes as $ligne) {
+                LigneFacture::create([
+                    'facture_id' => $copy->id,
+                    'produit_id' => $ligne->produit_id,
+                    'quantite' => $ligne->quantite,
+                    'prix_unitaire' => $ligne->prix_unitaire,
+                    'total_ligne' => $ligne->total_ligne,
+                    'remise' => $ligne->remise ?? 0,
+                ]);
+            }
+
+            ActivityLogger::created($copy, "Duplication facture {$facture->numero_facture} → {$copy->numero_facture}");
+
+            return $copy;
+        });
+
+        return redirect()->route('factures.edit', $new->id)->with('success', 'Facture dupliquée en brouillon.');
+    }
+
+    public function annuler(Facture $facture)
+    {
+        // Only admin or owner can cancel
+        if (!auth()->user()->isAdmin() && $facture->user_id !== auth()->id()) {
+            return back()->with('error', 'Vous ne pouvez pas annuler cette facture.');
+        }
+
+        if ($facture->status === 'annule') {
+            return back()->with('info', 'La facture est déjà annulée.');
+        }
+
+        DB::transaction(function () use ($facture) {
+            // If it was a 'recu', attempt to reverse stock mouvements
+            if ($facture->type_document === 'recu') {
+                foreach ($facture->lignes as $ligne) {
+                    MouvementStock::create([
+                        'produit_id' => $ligne->produit_id,
+                        'type' => 'entree',
+                        'quantite' => $ligne->quantite,
+                        'raison' => "Annulation facture {$facture->numero_facture}",
+                    ]);
+
+                    ActivityLogger::stockUpdate(
+                        $ligne->produit,
+                        "Annulation - retour en stock de {$ligne->produit->nom} - Facture {$facture->numero_facture}",
+                        $ligne->quantite
+                    );
+                }
+            }
+
+            $facture->update(['status' => 'annule', 'modifiable' => false]);
+
+            ActivityLogger::deleted($facture, "Annulation facture {$facture->numero_facture}");
+        });
+
+        return redirect()->route('factures.index')->with('success', 'Facture annulée.');
     }
 
     public function destroy(Facture $facture)

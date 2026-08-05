@@ -34,6 +34,16 @@
                         <a href="tel:{{ $client->telephone }}" class="text-decoration-none">{{ $client->telephone }}</a>
                     </span>
                 </div>
+                <div class="mb-2">
+                    <span class="text-muted">Email:</span>
+                    <span class="fw-semibold ms-2">
+                        @if($client->email)
+                            <a href="mailto:{{ $client->email }}" class="text-decoration-none">{{ $client->email }}</a>
+                        @else
+                            -
+                        @endif
+                    </span>
+                </div>
             </div>
             <div class="col-12 col-md-6">
                 <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt me-2"></i>Coordonnees</h5>
@@ -85,7 +95,7 @@
                                         <span class="badge bg-warning-subtle text-warning">Pro-forma</span>
                                     @endif
                                 </td>
-                                <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} CFA</td>
+                                <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                 <td class="text-muted">{{ $facture->created_at->format('d/m/Y') }}</td>
                                 <td>
                                     <a href="{{ route('factures.show', $facture->id) }}" class="btn btn-sm btn-outline-primary">

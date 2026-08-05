@@ -9,9 +9,18 @@
         <h1 class="page-title">Details du produit</h1>
         <p class="page-subtitle">{{ $produit->nom }}</p>
     </div>
-    <a href="{{ route('produits.index') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Retour
-    </a>
+    <div class="btn-group" role="group">
+        <a href="{{ route('produits.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Retour
+        </a>
+        @auth
+            @if(auth()->user()->isAdmin())
+                <a href="{{ route('produits.edit', $produit->id) }}" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil me-1"></i> Modifier
+                </a>
+            @endif
+        @endauth
+    </div>
 </div>
 
 {{-- Product Info Card --}}
@@ -25,12 +34,28 @@
                     <span class="fw-semibold ms-2">{{ $produit->nom }}</span>
                 </div>
                 <div class="mb-2">
+                    <span class="text-muted">SKU:</span>
+                    <span class="fw-semibold ms-2">{{ $produit->sku ?? '-' }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted">Catégorie:</span>
+                    <span class="fw-semibold ms-2">{{ $produit->categorie ?? '-' }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted">Famille:</span>
+                    <span class="fw-semibold ms-2">{{ $produit->famille ?? '-' }}</span>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted">Unité:</span>
+                    <span class="fw-semibold ms-2">{{ $produit->unite ?? '-' }}</span>
+                </div>
+                <div class="mb-2">
                     <span class="text-muted">Prix d'achat:</span>
-                    <span class="fw-semibold ms-2">{{ number_format($produit->prix_achat, 0, ',', ' ') }} CFA</span>
+                    <span class="fw-semibold ms-2">{{ number_format($produit->prix_achat, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</span>
                 </div>
                 <div class="mb-2">
                     <span class="text-muted">Prix de vente:</span>
-                    <span class="fw-semibold ms-2">{{ number_format($produit->prix_vente, 0, ',', ' ') }} CFA</span>
+                    <span class="fw-semibold ms-2">{{ number_format($produit->prix_vente, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</span>
                 </div>
             </div>
             <div class="col-12 col-md-6">
@@ -38,7 +63,7 @@
                 <div class="mb-2">
                     <span class="text-muted">Stock actuel:</span>
                     <span class="fw-semibold ms-2 {{ $produit->enAlerte() ? 'text-danger' : '' }}">
-                        {{ $produit->stock }}
+                        {{ $produit->stock_actuel }}
                         @if($produit->enAlerte())
                             <i class="bi bi-exclamation-triangle text-danger ms-1"></i>
                         @endif
@@ -52,23 +77,33 @@
                     <span class="text-muted">Date d'ajout:</span>
                     <span class="fw-semibold ms-2">{{ $produit->created_at->format('d/m/Y') }}</span>
                 </div>
-                @if($produit->enAlerte())
+                @if($produit->photo)
                     <div class="mt-3">
-                        <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Stock en alerte</span>
+                        <img src="{{ asset('storage/' . $produit->photo) }}" alt="Photo produit" class="img-fluid rounded" style="max-height: 220px; object-fit: contain;">
                     </div>
                 @endif
             </div>
         </div>
-        
+
         @auth
             @if(auth()->user()->isAdmin())
-        <div class="mt-3 pt-3 border-top">
-            <a href="{{ route('produits.reapprovisionnement', $produit->id) }}" class="btn btn-outline-success">
-                <i class="bi bi-plus-circle me-1"></i> Reapprovisionner
-            </a>
-        </div>
+                <div class="mt-3 pt-3 border-top d-flex gap-2">
+                    <a href="{{ route('produits.reapprovisionnement', $produit->id) }}" class="btn btn-outline-success">
+                        <i class="bi bi-plus-circle me-1"></i> Reapprovisionner
+                    </a>
+                    <a href="{{ route('produits.ajustement', $produit->id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-sliders me-1"></i> Ajuster stock
+                    </a>
+                </div>
             @endif
         @endauth
+    </div>
+</div>
+
+<div class="modern-card mb-4">
+    <div class="card-body">
+        <h5 class="fw-bold mb-3"><i class="bi bi-card-text me-2"></i>Description</h5>
+        <p class="text-muted">{{ $produit->description ?? 'Aucune description disponible.' }}</p>
     </div>
 </div>
 

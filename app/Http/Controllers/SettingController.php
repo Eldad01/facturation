@@ -37,6 +37,7 @@ class SettingController extends Controller
             'rccm' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
             'national_motto' => 'nullable|string|max:255',
+            'tva_default' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $settings = Setting::first() ?? new Setting;
@@ -55,6 +56,7 @@ class SettingController extends Controller
         $settings->rccm = $request->rccm;
         $settings->country = $request->country;
         $settings->national_motto = $request->national_motto;
+        $settings->tva_default = $request->tva_default ?? 0;
 
         // Upload du logo - securisation stricte
         if ($request->hasFile('logo')) {

@@ -132,8 +132,8 @@
         <tr>
             <th>Produit</th>
             <th>Qté</th>
-            <th>PU (FCFA)</th>
-            <th>Total (FCFA)</th>
+            <th>PU ({{ $app_settings->devise ?? 'FCFA' }})</th>
+            <th>Total ({{ $app_settings->devise ?? 'FCFA' }})</th>
         </tr>
     </thead>
     <tbody>
@@ -149,7 +149,7 @@
 </table>
 
 <div class="total">
-    TOTAL : {{ number_format($facture->total, 0, ',', ' ') }} FCFA
+    TOTAL : {{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}
 </div><br><br><br><br>
 
 <!-- DATE -->

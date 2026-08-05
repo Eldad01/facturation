@@ -15,7 +15,7 @@
     <div class="col-12 col-md-8 col-lg-6">
         <div class="modern-card">
             <div class="card-body">
-                <form action="{{ route('produits.store') }}" method="POST" id="produitForm">
+                <form action="{{ route('produits.store') }}" method="POST" enctype="multipart/form-data" id="produitForm">
                     @csrf
 
                     <div class="mb-3">
@@ -31,8 +31,89 @@
                         @enderror
                     </div>
 
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sku" class="form-label">SKU</label>
+                                <input type="text"
+                                       name="sku"
+                                       id="sku"
+                                       class="form-control @error('sku') is-invalid @enderror"
+                                       value="{{ old('sku') }}">
+                                @error('sku')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categorie" class="form-label">Catégorie</label>
+                                <input type="text"
+                                       name="categorie"
+                                       id="categorie"
+                                       class="form-control @error('categorie') is-invalid @enderror"
+                                       value="{{ old('categorie') }}">
+                                @error('categorie')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="famille" class="form-label">Famille</label>
+                                <input type="text"
+                                       name="famille"
+                                       id="famille"
+                                       class="form-control @error('famille') is-invalid @enderror"
+                                       value="{{ old('famille') }}">
+                                @error('famille')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="unite" class="form-label">Unité</label>
+                                <input type="text"
+                                       name="unite"
+                                       id="unite"
+                                       class="form-control @error('unite') is-invalid @enderror"
+                                       value="{{ old('unite') }}">
+                                @error('unite')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
-                        <label for="prix_achat" class="form-label">Prix d'achat (CFA)</label>
+                        <label for="description" class="form-label">Description</label>
+                        <textarea name="description"
+                                  id="description"
+                                  rows="3"
+                                  class="form-control @error('description') is-invalid @enderror">{{ old('description') }}</textarea>
+                        @error('description')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Photo du produit</label>
+                        <input type="file"
+                               name="photo"
+                               id="photo"
+                               accept="image/*"
+                               class="form-control @error('photo') is-invalid @enderror">
+                        @error('photo')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="prix_achat" class="form-label">Prix d'achat ({{ $app_settings->devise ?? 'FCFA' }})</label>
                         <input type="number"
                                name="prix_achat"
                                id="prix_achat"
@@ -47,7 +128,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="prix_vente" class="form-label">Prix de vente (CFA)</label>
+                        <label for="prix_vente" class="form-label">Prix de vente ({{ $app_settings->devise ?? 'FCFA' }})</label>
                         <input type="number"
                                name="prix_vente"
                                id="prix_vente"
@@ -131,11 +212,11 @@
                     <div class="row mt-2">
                         <div class="col-6">
                             <small class="text-muted d-block">Prix d'achat</small>
-                            <strong id="confirmPrixAchat">-</strong> CFA
+                            <strong id="confirmPrixAchat">-</strong> {{ $app_settings->devise ?? 'FCFA' }}
                         </div>
                         <div class="col-6">
                             <small class="text-muted d-block">Prix de vente</small>
-                            <strong id="confirmPrixVente">-</strong> CFA
+                            <strong id="confirmPrixVente">-</strong> {{ $app_settings->devise ?? 'FCFA' }}
                         </div>
                     </div>
                 </div>

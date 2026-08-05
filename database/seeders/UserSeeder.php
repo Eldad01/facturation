@@ -20,5 +20,16 @@ class UserSeeder extends Seeder
                 'is_active' => true,
             ]
         );
+
+        User::updateOrCreate(
+            ['email' => 'user@facturation.com'],
+            [
+                'name' => 'Utilisateur',
+                'email' => 'user@facturation.com',
+                'password' => Hash::make('user123'),
+                'role' => 'employe',
+                'is_active' => true,
+            ]
+        );
     }
 }
