@@ -42,7 +42,7 @@
                             <td class="text-center">{{ $fournisseur->produits->count() }}</td>
                             <td class="text-center">{{ $fournisseur->commandes->count() }}</td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm" role="group">
+                                <div class="action-buttons justify-content-end">
                                     <a href="{{ route('fournisseurs.show', $fournisseur->id) }}"
                                        class="btn btn-sm btn-outline-info"
                                        title="Voir">

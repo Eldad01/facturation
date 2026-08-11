@@ -266,7 +266,7 @@ class ActivityLogController extends Controller
         if ($type === 'days') {
             // Suppression par nombre de jours
             $request->validate([
-                'days' => 'required|integer|min:1|max=365',
+                'days' => 'required|integer|min:1|max:365',
             ], [
                 'days.required' => 'Le nombre de jours est requis.',
                 'days.integer' => 'Le nombre de jours doit être un entier.',

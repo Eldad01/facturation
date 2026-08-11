@@ -24,7 +24,7 @@ Route::get('/', function () {
 });
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.perform');
+Route::post('/login', [AuthController::class, 'login'])->name('login.perform')->middleware('throttle:login');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 /*
@@ -32,7 +32,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 | Protected routes - All authenticated users
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -189,16 +189,28 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Factures - Accessible by both admin and employe
+    | Devis (pro-forma) - Accessible by both admin and employe
     |--------------------------------------------------------------------------
     */
-    Route::resource('factures', FactureController::class);
+    Route::get('/devis/create', [FactureController::class, 'createProforma'])->name('devis.create');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Factures - Accessible by both admin and employe
+    | Une seule page avec onglets (Devis / En attente / Reçus)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/factures', [FactureController::class, 'index'])->name('factures.index');
+    Route::get('/factures/create', [FactureController::class, 'createRecu'])->name('factures.create');
+
+    Route::post('/factures', [FactureController::class, 'store'])->name('factures.store');
+    Route::get('/factures/{facture}', [FactureController::class, 'show'])->name('factures.show');
+    Route::get('/factures/{facture}/edit', [FactureController::class, 'edit'])->name('factures.edit');
+    Route::put('/factures/{facture}', [FactureController::class, 'update'])->name('factures.update');
+    Route::delete('/factures/{facture}', [FactureController::class, 'destroy'])->name('factures.destroy');
+
     Route::post('/factures/{facture}/paiements', [PaiementController::class, 'store'])
         ->name('factures.paiements.store');
-
-    // Duplication et annulation
-    Route::post('/factures/{facture}/duplicate', [FactureController::class, 'duplicate'])
-        ->name('factures.duplicate');
 
     Route::post('/factures/{facture}/annuler', [FactureController::class, 'annuler'])
         ->name('factures.annuler');

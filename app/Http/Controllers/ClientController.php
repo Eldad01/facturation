@@ -104,6 +104,11 @@ class ClientController extends Controller
             return redirect()->route('clients.index')->with('error', 'Vous n\'avez pas le droit de supprimer des clients.');
         }
 
+        if ($client->factures()->exists()) {
+            return redirect()->route('clients.index')
+                ->with('error', 'Ce client a des factures associées et ne peut pas être supprimé.');
+        }
+
         $clientName = $client->nomComplet;
         
         $client->delete();

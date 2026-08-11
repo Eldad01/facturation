@@ -32,7 +32,7 @@
                                name="date_reception_prevue"
                                id="date_reception_prevue"
                                class="form-control @error('date_reception_prevue') is-invalid @enderror"
-                               value="{{ old('date_reception_prevue', $commande->date_reception_prevue) }}">
+                               value="{{ old('date_reception_prevue', $commande->date_reception_prevue?->format('Y-m-d')) }}">
                         @error('date_reception_prevue')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror

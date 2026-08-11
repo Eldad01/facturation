@@ -26,4 +26,9 @@ class Paiement extends Model
     {
         return $this->belongsTo(Facture::class);
     }
+
+    public function lignes()
+    {
+        return $this->hasMany(LignePaiement::class);
+    }
 }

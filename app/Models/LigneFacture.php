@@ -13,6 +13,7 @@ class LigneFacture extends Model
         'facture_id',
         'produit_id',
         'quantite',
+        'quantite_payee',
         'prix_unitaire',
         'total_ligne',
         'remise'
@@ -28,5 +29,20 @@ class LigneFacture extends Model
     public function produit()
     {
         return $this->belongsTo(Produit::class);
+    }
+
+    public function lignePaiements()
+    {
+        return $this->hasMany(LignePaiement::class);
+    }
+
+    public function getQuantiteRestanteAttribute()
+    {
+        return max(0, $this->quantite - $this->quantite_payee);
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->quantite_payee >= $this->quantite;
     }
 }

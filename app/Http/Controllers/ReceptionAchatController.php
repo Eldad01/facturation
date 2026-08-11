@@ -43,61 +43,72 @@ class ReceptionAchatController extends Controller
 
         $numero = 'REC-' . date('YmdHis');
 
-        $reception = ReceptionAchat::create([
-            'numero' => $numero,
-            'commande_achat_id' => $commande->id,
-            'date_reception' => $request->date_reception,
-            'notes' => $request->notes,
-        ]);
+        try {
+            DB::transaction(function () use ($request, $commande, $numero) {
+                $reception = ReceptionAchat::create([
+                    'numero' => $numero,
+                    'commande_achat_id' => $commande->id,
+                    'date_reception' => $request->date_reception,
+                    'notes' => $request->notes,
+                ]);
 
-        foreach ($request->lignes as $ligneData) {
-            $ligne = LigneCommandeAchat::find($ligneData['ligne_id']);
-            $quantiteReçue = (int) $ligneData['quantite_reçue'];
+                foreach ($request->lignes as $ligneData) {
+                    $ligne = $commande->lignes()->where('id', $ligneData['ligne_id'])->lockForUpdate()->first();
 
-            if ($ligne->quantite_reçue + $quantiteReçue > $ligne->quantite) {
-                return redirect()->route('commandes_achat.show', $commande->id)
-                    ->with('error', "Quantité reçue dépasse la quantité commandée pour {$ligne->produit->nom}.");
-            }
+                    if (!$ligne) {
+                        throw new \RuntimeException('Une des lignes soumises n\'appartient pas à cette commande.');
+                    }
 
-            // Créer la ligne de réception
-            $ligne->receptionsLignes()->create([
-                'reception_achat_id' => $reception->id,
-                'quantite_reçue' => $quantiteReçue,
-            ]);
+                    $quantiteReçue = (int) $ligneData['quantite_reçue'];
 
-            // Mettre à jour la quantité reçue dans la ligne de commande
-            $ligne->update([
-                'quantite_reçue' => $ligne->quantite_reçue + $quantiteReçue,
-            ]);
+                    if ($ligne->quantite_reçue + $quantiteReçue > $ligne->quantite) {
+                        throw new \RuntimeException("Quantité reçue dépasse la quantité commandée pour {$ligne->produit->nom}.");
+                    }
 
-            // Créer le mouvement de stock (entrée)
-            MouvementStock::create([
-                'produit_id' => $ligne->produit_id,
-                'type' => 'entree',
-                'quantite' => $quantiteReçue,
-                'raison' => "Réception achat - Commande {$commande->numero}",
-            ]);
+                    // Créer la ligne de réception
+                    $ligne->receptionsLignes()->create([
+                        'reception_achat_id' => $reception->id,
+                        'quantite_reçue' => $quantiteReçue,
+                    ]);
 
-            // Log d'activité
-            ActivityLogger::stockUpdate(
-                $ligne->produit,
-                "Réception du produit {$ligne->produit->nom} - Commande {$commande->numero}",
-                $quantiteReçue
-            );
+                    // Mettre à jour la quantité reçue dans la ligne de commande
+                    $ligne->update([
+                        'quantite_reçue' => $ligne->quantite_reçue + $quantiteReçue,
+                    ]);
+
+                    // Créer le mouvement de stock (entrée)
+                    MouvementStock::create([
+                        'produit_id' => $ligne->produit_id,
+                        'type' => 'entree',
+                        'quantite' => $quantiteReçue,
+                        'raison' => "Réception achat - Commande {$commande->numero}",
+                    ]);
+
+                    // Log d'activité
+                    ActivityLogger::stockUpdate(
+                        $ligne->produit,
+                        "Réception du produit {$ligne->produit->nom} - Commande {$commande->numero}",
+                        $quantiteReçue
+                    );
+                }
+
+                // Mettre à jour le statut de la commande
+                $commande->refresh();
+                if ($commande->quantite_reçue >= $commande->quantite_total) {
+                    $commande->update(['statut' => 'reçue', 'date_reception' => $request->date_reception]);
+                } else {
+                    $commande->update(['statut' => 'reçue_partiellement']);
+                }
+
+                ActivityLogger::created(
+                    $reception,
+                    "Création de la réception d'achat {$numero} - Commande {$commande->numero}"
+                );
+            });
+        } catch (\RuntimeException $e) {
+            return redirect()->route('commandes_achat.show', $commande->id)
+                ->with('error', $e->getMessage());
         }
-
-        // Mettre à jour le statut de la commande
-        $commande->refresh();
-        if ($commande->quantite_reçue >= $commande->quantite_total) {
-            $commande->update(['statut' => 'reçue', 'date_reception' => $request->date_reception]);
-        } else {
-            $commande->update(['statut' => 'reçue_partiellement']);
-        }
-
-        ActivityLogger::created(
-            $reception,
-            "Création de la réception d'achat {$numero} - Commande {$commande->numero}"
-        );
 
         return redirect()->route('commandes_achat.show', $commande->id)
             ->with('success', 'Réception d\'achat créée et stock mis à jour.');

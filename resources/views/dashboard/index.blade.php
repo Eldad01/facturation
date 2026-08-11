@@ -13,7 +13,7 @@
         <a href="{{ route('factures.create') }}" class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg me-1"></i><span class="d-none d-md-inline">Nouveau recu</span>
         </a>
-        <a href="{{ route('factures.create', ['type' => 'pro-forma']) }}" class="btn btn-outline-primary btn-sm">
+        <a href="{{ route('devis.create') }}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-file-earmark-plus me-1"></i><span class="d-none d-md-inline">Nouveau devis</span>
         </a>
     </div>
@@ -114,6 +114,25 @@
             </table>
         </div>
     </div>
+    @if($produitsCritiques->hasPages())
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
+                @foreach ($produitsCritiques->links()->elements as $element)
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @if ($page == $produitsCritiques->currentPage())
+                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+            </ul>
+        </nav>
+    </div>
+    @endif
 </div>
 @endif
 
@@ -133,7 +152,7 @@
 <div class="modern-card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-file-text me-2"></i>Factures recentes</span>
-        <a href="{{ route('factures.index') }}" class="btn btn-sm btn-outline-secondary">
+        <a href="{{ route('factures.index', ['tab' => 'attente']) }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-right"></i> Voir tout
         </a>
     </div>
@@ -186,6 +205,25 @@
             </div>
         @endif
     </div>
+    @if($recentFactures->hasPages())
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
+                @foreach ($recentFactures->links()->elements as $element)
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @if ($page == $recentFactures->currentPage())
+                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+            </ul>
+        </nav>
+    </div>
+    @endif
 </div>
 @endsection
 

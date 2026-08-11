@@ -12,7 +12,8 @@ class PdfController extends Controller
     {
         $facture->load([
             'client',
-            'lignes.produit'
+            'lignes.produit',
+            'paiements',
         ]);
 
         $settings = Setting::first();

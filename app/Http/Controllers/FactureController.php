@@ -14,30 +14,64 @@ use Carbon\Carbon;
 
 class FactureController extends Controller
 {
+    /**
+     * Page unique "Factures" à onglets : Devis / En attente / Reçus (payés)
+     */
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $etat = $request->input('etat'); // 'non_payee' | 'partielle' | null (tous), pour l'onglet "En attente"
+        $tab = $request->input('tab', 'devis');
 
-        $factures = Facture::with('client', 'user')
-            ->when($search, function ($query, $search) {
-                $query->whereHas('client', fn($q) =>
-                    $q->where('nom', 'like', "%$search%")
+        $searchScope = function ($query) use ($search) {
+            $query->when($search, function ($q, $search) {
+                $q->whereHas('client', fn($qc) =>
+                    $qc->where('nom', 'like', "%$search%")
                 )->orWhere('numero_facture', 'like', "%$search%");
-            })
-            ->orderByDesc('id')
-            ->paginate(10);
+            });
+        };
 
-        return view('factures.index', compact('factures'));
+        $devis = Facture::with('client', 'user')
+            ->where('type_document', 'pro-forma')
+            ->tap($searchScope)
+            ->orderByDesc('id')
+            ->paginate(10, ['*'], 'devis_page')
+            ->withQueryString();
+
+        $enAttente = Facture::with('client', 'user')
+            ->where('type_document', 'recu')
+            ->where('status', '!=', 'payee')
+            ->when($etat === 'non_payee', fn($q) => $q->where('status', '!=', 'partiellement_payee'))
+            ->when($etat === 'partielle', fn($q) => $q->where('status', 'partiellement_payee'))
+            ->tap($searchScope)
+            ->orderByDesc('id')
+            ->paginate(10, ['*'], 'attente_page')
+            ->withQueryString();
+
+        $recus = Facture::with('client', 'user')
+            ->where('type_document', 'recu')
+            ->where('status', 'payee')
+            ->tap($searchScope)
+            ->orderByDesc('id')
+            ->paginate(10, ['*'], 'recu_page')
+            ->withQueryString();
+
+        return view('factures.index', compact('devis', 'enAttente', 'recus', 'tab'));
     }
 
-    public function create(Request $request)
+    public function createProforma()
     {
-        $type = $request->get('type', 'recu');
-        
+        return view('devis.create', [
+            'clients' => Client::all(),
+            'produits' => Produit::all(),
+        ]);
+    }
+
+    public function createRecu()
+    {
         return view('factures.create', [
             'clients' => Client::all(),
             'produits' => Produit::all(),
-            'type_document' => $type,
         ]);
     }
 
@@ -53,7 +87,6 @@ class FactureController extends Controller
             'lignes' => 'required|array|min:1',
             'lignes.*.produit_id' => 'required|exists:produits,id',
             'lignes.*.quantite' => 'required|integer|min:1',
-            'lignes.*.prix_unitaire' => 'required|numeric|min:0',
             'lignes.*.remise' => 'nullable|numeric|min:0',
         ]);
 
@@ -69,90 +102,94 @@ class FactureController extends Controller
 
         $client = Client::find($request->client_id);
 
-        /* VÉRIFICATION STOCK AVANT TRANSACTION */
-        if ($request->type_document === 'recu') {
-            foreach ($request->lignes as $index => $ligne) {
-                $produit = Produit::find($ligne['produit_id']);
-
-                if ($ligne['quantite'] > $produit->stock_actuel) {
-                    return redirect()
-                        ->route('factures.create')
-                        ->withErrors([
-                            "lignes.$index.quantite" =>
-                                "(reste: {$produit->stock_actuel})"
-                        ])
-                        ->withInput();
-                }
-            }
-        }
-
-        /* TRANSACTION PROPRE */
-        $facture = DB::transaction(function () use ($request, $client) {
-            $status = $request->input('status') ?? ($request->type_document === 'recu' ? 'recu' : 'pro-forma');
-
-            $facture = Facture::create([
-                'client_id' => $request->client_id,
-                'user_id' => auth()->id(),
-                'type_document' => $request->type_document,
-                'status' => $status,
-                'date_echeance' => $request->date_echeance,
-                'numero_facture' => Facture::generateNumeroFor($request->type_document),
-                'total' => 0,
-                'montant_paye' => 0,
-                'modifiable' => true,
-                'remise' => $request->remise ?? 0,
-                'tva' => $request->tva ?? 0,
-            ]);
-
-            $subtotal = 0;
-
-            foreach ($request->lignes as $ligne) {
-                // Cast to integer for XOF currency (no decimals)
-                $quantite = (int) $ligne['quantite'];
-                // Remove any non-numeric characters except digits
-                $prixUnitaire = (int) preg_replace('/[^0-9]/', '', $ligne['prix_unitaire']);
-                $remiseLigne = isset($ligne['remise']) ? (float) $ligne['remise'] : 0.0;
-
-                $totalLigne = max(0, ($quantite * $prixUnitaire) - $remiseLigne);
-                
-                $subtotal += $totalLigne;
-
-                LigneFacture::create([
-                    'facture_id' => $facture->id,
-                    'produit_id' => $ligne['produit_id'],
-                    'quantite' => $quantite,
-                    'prix_unitaire' => $prixUnitaire,
-                    'total_ligne' => (int) $totalLigne,
-                    'remise' => $remiseLigne,
-                ]);
+        try {
+            /* TRANSACTION PROPRE - verrou stock + prix catalogue pour eviter survente et manipulation de prix */
+            $facture = DB::transaction(function () use ($request, $produitIds) {
+                $produits = Produit::whereIn('id', $produitIds)->lockForUpdate()->get()->keyBy('id');
 
                 if ($request->type_document === 'recu') {
-                    MouvementStock::create([
-                        'produit_id' => $ligne['produit_id'],
-                        'type' => 'sortie',
+                    foreach ($request->lignes as $index => $ligne) {
+                        $produit = $produits[$ligne['produit_id']];
+
+                        if ((int) $ligne['quantite'] > $produit->stock) {
+                            throw \Illuminate\Validation\ValidationException::withMessages([
+                                "lignes.$index.quantite" =>
+                                    "(reste: {$produit->stock})"
+                            ]);
+                        }
+                    }
+                }
+
+                $status = $request->input('status') ?? ($request->type_document === 'recu' ? 'recu' : 'pro-forma');
+
+                $facture = Facture::create([
+                    'client_id' => $request->client_id,
+                    'user_id' => auth()->id(),
+                    'type_document' => $request->type_document,
+                    'status' => $status,
+                    'date_echeance' => $request->date_echeance,
+                    'numero_facture' => Facture::generateNumeroFor($request->type_document),
+                    'total' => 0,
+                    'montant_paye' => 0,
+                    'modifiable' => true,
+                    'remise' => $request->remise ?? 0,
+                    'tva' => $request->tva ?? 0,
+                ]);
+
+                $subtotal = 0;
+
+                foreach ($request->lignes as $ligne) {
+                    $produit = $produits[$ligne['produit_id']];
+                    $quantite = (int) $ligne['quantite'];
+                    // Prix toujours issu du catalogue produit, jamais de la saisie client (anti-manipulation)
+                    $prixUnitaire = (int) $produit->prix_vente;
+                    $remiseLigne = isset($ligne['remise']) ? (float) $ligne['remise'] : 0.0;
+
+                    $totalLigne = max(0, ($quantite * $prixUnitaire) - $remiseLigne);
+
+                    $subtotal += $totalLigne;
+
+                    LigneFacture::create([
+                        'facture_id' => $facture->id,
+                        'produit_id' => $produit->id,
                         'quantite' => $quantite,
-                        'raison' => "Vente facture {$facture->numero_facture}",
+                        'prix_unitaire' => $prixUnitaire,
+                        'total_ligne' => (int) $totalLigne,
+                        'remise' => $remiseLigne,
                     ]);
 
-                    $produitLigne = Produit::find($ligne['produit_id']);
-                    ActivityLogger::stockUpdate(
-                        $produitLigne,
-                        "Vente de {$produitLigne->nom} - Facture {$facture->numero_facture}",
-                        $quantite
-                    );
+                    if ($request->type_document === 'recu') {
+                        MouvementStock::create([
+                            'produit_id' => $produit->id,
+                            'type' => 'sortie',
+                            'quantite' => $quantite,
+                            'raison' => "Vente facture {$facture->numero_facture}",
+                        ]);
+
+                        ActivityLogger::stockUpdate(
+                            $produit,
+                            "Vente de {$produit->nom} - Facture {$facture->numero_facture}",
+                            $quantite
+                        );
+                    }
                 }
-            }
 
-            $invoiceRemise = (float) ($request->remise ?? 0);
-            $tva = (float) ($request->tva ?? 0);
+                $invoiceRemise = (float) ($request->remise ?? 0);
+                $tva = (float) ($request->tva ?? 0);
 
-            $totalHt = max(0, $subtotal - $invoiceRemise);
-            $totalTtc = round($totalHt * (1 + $tva / 100));
+                $totalHt = max(0, $subtotal - $invoiceRemise);
+                $totalTtc = round($totalHt * (1 + $tva / 100));
 
-            $facture->update(['total' => $totalTtc]);
+                $facture->update(['total' => $totalTtc]);
 
-            return $facture;
-        });
+                return $facture;
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()
+                ->route('factures.create')
+                ->withErrors($e->errors())
+                ->withInput();
+        }
 
         // Enregistrer l'activité
         ActivityLogger::created(
@@ -161,60 +198,83 @@ class FactureController extends Controller
             $facture->type_document === 'recu' ? (float) $facture->total : null
         );
 
+        if ($facture->type_document === 'recu') {
+            return redirect()
+                ->route('factures.show', $facture->id)
+                ->with('success', 'Facture créée avec succès. Vous pouvez enregistrer un paiement ci-dessous.');
+        }
+
         return redirect()
-            ->route('factures.index')
-            ->with('success', 'Facture créée avec succès.');
+            ->route('factures.index', ['tab' => 'devis'])
+            ->with('success', 'Devis créé avec succès.');
     }
 
 
     public function valider(Facture $facture)
     {
-        if ($facture->type_document !== 'pro-forma') {
-            return redirect()
-                ->route('factures.index')
-                ->with('error', 'Seul un pro-forma peut être validé.');
+        if (!auth()->user()->isAdmin() && $facture->user_id !== auth()->id()) {
+            return back()->with('error', 'Vous ne pouvez pas valider une facture créée par un autre utilisateur.');
         }
 
-        /* VÉRIFICATION STOCK */
-        foreach ($facture->lignes as $ligne) {
-            $produit = $ligne->produit;
-
-            if ($ligne->quantite > $produit->stock_actuel) {
-                return redirect()
-                    ->route('factures.edit', $facture->id)
-                    ->withErrors([
-                        "lignes.{$ligne->id}.quantite" =>
-                            "Stock insuffisant pour {$produit->nom} (reste: {$produit->stock_actuel})"
-                ]);
-            }
+        if ($facture->type_document !== 'pro-forma') {
+            return redirect()
+                ->route('factures.show', $facture->id)
+                ->with('error', 'Seul un pro-forma peut être validé.');
         }
 
         $oldNumero = $facture->numero_facture;
         $client = $facture->client;
         $total = $facture->total;
 
-        /* TRANSACTION */
-        DB::transaction(function () use ($facture) {
-            foreach ($facture->lignes as $ligne) {
-                MouvementStock::create([
-                    'produit_id' => $ligne->produit_id,
-                    'type' => 'sortie',
-                    'quantite' => $ligne['quantite'],
-                    'raison' => "Validation facture {$facture->numero_facture}",
+        try {
+            /* TRANSACTION avec verrou stock pour eviter la survente concurrente */
+            DB::transaction(function () use ($facture) {
+                $lignes = $facture->lignes()->lockForUpdate()->get();
+                $produits = Produit::whereIn('id', $lignes->pluck('produit_id')->unique())
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
+
+                foreach ($lignes as $ligne) {
+                    $produit = $produits[$ligne->produit_id];
+
+                    if ($ligne->quantite > $produit->stock) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            "lignes.{$ligne->id}.quantite" =>
+                                "Stock insuffisant pour {$produit->nom} (reste: {$produit->stock})"
+                        ]);
+                    }
+                }
+
+                foreach ($lignes as $ligne) {
+                    $produit = $produits[$ligne->produit_id];
+
+                    MouvementStock::create([
+                        'produit_id' => $ligne->produit_id,
+                        'type' => 'sortie',
+                        'quantite' => $ligne->quantite,
+                        'raison' => "Validation facture {$facture->numero_facture}",
+                    ]);
+
+                    ActivityLogger::stockUpdate(
+                        $produit,
+                        "Validation - vente de {$produit->nom} - Facture {$facture->numero_facture}",
+                        $ligne->quantite
+                    );
+                }
+
+                $facture->update([
+                    'type_document' => 'recu',
+                    'status' => 'recu',
+                    'numero_facture' => Facture::generateNumeroFor('recu'),
+                    'modifiable' => false,
                 ]);
-
-                ActivityLogger::stockUpdate(
-                    $ligne->produit,
-                    "Validation - vente de {$ligne->produit->nom} - Facture {$facture->numero_facture}",
-                    $ligne->quantite
-                );
-            }
-
-            $facture->update([
-                'type_document' => 'recu',                'status' => 'recu',                'numero_facture' => Facture::generateNumeroFor('recu'),
-                'modifiable' => false,
-            ]);
-        });
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()
+                ->route('factures.edit', $facture->id)
+                ->withErrors($e->errors());
+        }
 
         // Enregistrer l'activité
         ActivityLogger::validated(
@@ -224,14 +284,14 @@ class FactureController extends Controller
         );
 
         return redirect()
-            ->route('factures.index')
-            ->with('success', 'Pro-forma validé en reçu.');
+            ->route('factures.show', $facture->id)
+            ->with('success', 'Pro-forma validé en reçu. Vous pouvez enregistrer un paiement ci-dessous.');
     }
 
 
     public function show(Facture $facture)
     {
-        $facture->load('client', 'lignes.produit', 'user', 'paiements');
+        $facture->load('client', 'lignes.produit', 'user', 'paiements.lignes.ligneFacture.produit');
         return view('factures.show', compact('facture'));
     }
 
@@ -309,7 +369,6 @@ class FactureController extends Controller
             'lignes' => 'required|array|min:1',
             'lignes.*.produit_id' => 'required|exists:produits,id',
             'lignes.*.quantite' => 'required|integer|min:1',
-            'lignes.*.prix_unitaire' => 'required|numeric|min:0',
             'lignes.*.remise' => 'nullable|numeric|min:0',
         ]);
 
@@ -326,21 +385,23 @@ class FactureController extends Controller
             $facture->lignes()->delete();
 
             $subtotal = 0;
+            $produitIds = collect($request->lignes)->pluck('produit_id');
+            $produits = Produit::whereIn('id', $produitIds)->get()->keyBy('id');
 
             foreach ($request->lignes as $ligne) {
-                // Cast to integer for XOF currency (no decimals)
+                $produit = $produits[$ligne['produit_id']];
                 $quantite = (int) $ligne['quantite'];
-                // Remove any non-numeric characters except digits
-                $prixUnitaire = (int) preg_replace('/[^0-9]/', '', $ligne['prix_unitaire']);
+                // Prix toujours issu du catalogue produit, jamais de la saisie client (anti-manipulation)
+                $prixUnitaire = (int) $produit->prix_vente;
                 $remiseLigne = isset($ligne['remise']) ? (float) $ligne['remise'] : 0.0;
 
                 $totalLigne = max(0, ($quantite * $prixUnitaire) - $remiseLigne);
-                
+
                 $subtotal += $totalLigne;
 
                 LigneFacture::create([
                     'facture_id' => $facture->id,
-                    'produit_id' => $ligne['produit_id'],
+                    'produit_id' => $produit->id,
                     'quantite' => $quantite,
                     'prix_unitaire' => $prixUnitaire,
                     'total_ligne' => (int) $totalLigne,
@@ -373,43 +434,7 @@ class FactureController extends Controller
             $oldData
         );
 
-        return redirect()->route('factures.index')->with('success', 'Facture mise à jour.');
-    }
-
-    public function duplicate(Facture $facture)
-    {
-        // Only allow admin or owner to duplicate
-        if (!auth()->user()->isAdmin() && $facture->user_id !== auth()->id()) {
-            return back()->with('error', 'Vous ne pouvez pas dupliquer cette facture.');
-        }
-
-        $new = DB::transaction(function () use ($facture) {
-            $copy = $facture->replicate();
-            $copy->numero_facture = Facture::generateNumeroFor($facture->type_document);
-            $copy->status = 'brouillon';
-            $copy->montant_paye = 0;
-            $copy->modifiable = true;
-            $copy->created_at = now();
-            $copy->updated_at = now();
-            $copy->push();
-
-            foreach ($facture->lignes as $ligne) {
-                LigneFacture::create([
-                    'facture_id' => $copy->id,
-                    'produit_id' => $ligne->produit_id,
-                    'quantite' => $ligne->quantite,
-                    'prix_unitaire' => $ligne->prix_unitaire,
-                    'total_ligne' => $ligne->total_ligne,
-                    'remise' => $ligne->remise ?? 0,
-                ]);
-            }
-
-            ActivityLogger::created($copy, "Duplication facture {$facture->numero_facture} → {$copy->numero_facture}");
-
-            return $copy;
-        });
-
-        return redirect()->route('factures.edit', $new->id)->with('success', 'Facture dupliquée en brouillon.');
+        return redirect()->route('factures.show', $facture->id)->with('success', 'Facture mise à jour.');
     }
 
     public function annuler(Facture $facture)
@@ -421,6 +446,12 @@ class FactureController extends Controller
 
         if ($facture->status === 'annule') {
             return back()->with('info', 'La facture est déjà annulée.');
+        }
+
+        if ($facture->montant_paye > 0) {
+            return back()->with('error', 'Cette facture a des paiements enregistrés (' .
+                number_format($facture->montant_paye, 0, ',', ' ') .
+                '). Supprimez ou remboursez les paiements avant de pouvoir l\'annuler.');
         }
 
         DB::transaction(function () use ($facture) {
@@ -447,7 +478,7 @@ class FactureController extends Controller
             ActivityLogger::deleted($facture, "Annulation facture {$facture->numero_facture}");
         });
 
-        return redirect()->route('factures.index')->with('success', 'Facture annulée.');
+        return redirect()->route('factures.show', $facture->id)->with('success', 'Facture annulée.');
     }
 
     public function destroy(Facture $facture)
@@ -469,6 +500,12 @@ class FactureController extends Controller
             }
         }
 
+        if ($facture->montant_paye > 0) {
+            return back()->with('error', 'Cette facture a des paiements enregistrés (' .
+                number_format($facture->montant_paye, 0, ',', ' ') .
+                '). Supprimez ou remboursez les paiements avant de pouvoir la supprimer.');
+        }
+
         $factureData = [
             'numero' => $facture->numero_facture,
             'client' => $facture->client->nomComplet ?? 'Inconnu',
@@ -483,6 +520,6 @@ class FactureController extends Controller
             "Suppression {$factureData['numero']} pour {$factureData['client']} - Total: {$factureData['total']}"
         );
 
-        return redirect()->route('factures.index')->with('success', 'Facture supprimée.');
+        return redirect()->route('factures.index', ['tab' => 'devis'])->with('success', 'Devis supprimé.');
     }
 }

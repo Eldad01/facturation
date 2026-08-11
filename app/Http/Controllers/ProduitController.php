@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\Produit;
 use App\Models\MouvementStock;
+use App\Models\LigneCommandeAchat;
+use App\Models\LigneFacture;
 use App\Services\ActivityLogger;
 
 class ProduitController extends Controller
@@ -61,7 +63,7 @@ class ProduitController extends Controller
             'photo' => $photoPath,
             'prix_achat' => (int) $request->prix_achat,
             'prix_vente' => (int) $request->prix_vente,
-            'stock' => (int) $request->stock,
+            'stock' => 0,
             'seuil_alerte' => (int) $request->seuil_alerte,
         ]);
 
@@ -180,8 +182,23 @@ class ProduitController extends Controller
 
     public function destroy(Produit $produit)
     {
+        if ($produit->mouvementsStock()->exists()) {
+            return redirect()->route('produits.index')
+                ->with('error', 'Ce produit a un historique de mouvements de stock et ne peut pas être supprimé.');
+        }
+
+        if (LigneCommandeAchat::where('produit_id', $produit->id)->exists()) {
+            return redirect()->route('produits.index')
+                ->with('error', 'Ce produit est référencé dans une commande d\'achat et ne peut pas être supprimé.');
+        }
+
+        if (LigneFacture::where('produit_id', $produit->id)->exists()) {
+            return redirect()->route('produits.index')
+                ->with('error', 'Ce produit est référencé dans une facture et ne peut pas être supprimé.');
+        }
+
         $produitName = $produit->nom;
-        
+
         $produit->delete();
 
         // Enregistrer l'activité

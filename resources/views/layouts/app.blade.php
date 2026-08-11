@@ -992,7 +992,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('factures*') ? 'active' : '' }}" 
+                    <a class="nav-link {{ request()->routeIs('factures*') || request()->routeIs('devis*') ? 'active' : '' }}"
                        href="{{ route('factures.index') }}">
                         <i class="bi bi-file-text"></i>
                         <span>Factures</span>

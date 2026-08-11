@@ -51,7 +51,7 @@
                             </td>
                             <td class="text-center text-muted d-none d-lg-table-cell">{{ $produit->seuil_alerte }}</td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm" role="group">
+                                <div class="action-buttons justify-content-end">
                                     <a href="{{ route('produits.show', $produit->id) }}"
                                        class="btn btn-sm btn-outline-info"
                                        title="Voir">

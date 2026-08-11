@@ -85,9 +85,9 @@
                                        title="Modifier">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    @can('role', 'admin')
-                                        <form action="{{ route('clients.destroy', $client->id) }}" 
-                                              method="POST" 
+                                    @if(auth()->user()->isAdmin())
+                                        <form action="{{ route('clients.destroy', $client->id) }}"
+                                              method="POST"
                                               class="d-inline"
                                               onsubmit="return confirm('Voulez-vous vraiment supprimer ce client ?');">
                                             @csrf
@@ -96,7 +96,7 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
-                                    @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>

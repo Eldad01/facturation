@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Nouvelle facture')
+@section('title', 'Nouveau devis')
 
 @section('content')
 {{-- Page Header --}}
 <div class="page-header">
     <div>
-        <h1 class="page-title">Nouvelle facture</h1>
-        <p class="page-subtitle">Créer un reçu</p>
+        <h1 class="page-title">Nouveau devis</h1>
+        <p class="page-subtitle">Créer une pro-forma</p>
     </div>
 </div>
 
@@ -29,7 +29,7 @@
     <div class="col-12 col-lg-10">
         <div class="modern-card">
             <div class="card-body">
-                @include('factures._form', ['typeDocument' => 'recu', 'cancelRoute' => route('factures.index', ['tab' => 'attente'])])
+                @include('factures._form', ['typeDocument' => 'pro-forma', 'cancelRoute' => route('factures.index', ['tab' => 'devis'])])
             </div>
         </div>
     </div>

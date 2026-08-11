@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Session\TokenMismatchException;
 use Throwable;
@@ -39,6 +40,12 @@ class Handler extends ExceptionHandler
             return redirect()
                 ->route('login')
                 ->with('error', 'Votre session a expiré. Veuillez vous reconnecter.');
+        }
+
+        // Filet de sécurité : violation de contrainte de clé étrangère (ex: suppression
+        // concurrente d'un enregistrement encore référencé, malgré les vérifications applicatives)
+        if ($e instanceof QueryException && in_array($e->getCode(), ['23503', '23000'], true)) {
+            return back()->with('error', 'Cette action est impossible car l\'enregistrement est référencé ailleurs dans l\'application.');
         }
 
         return parent::render($request, $e);

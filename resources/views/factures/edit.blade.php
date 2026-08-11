@@ -18,7 +18,7 @@
         <div>
             <ul class="mb-0">
                 @foreach($errors->get('stock') as $msg)
-                    <li>{!! $msg !!}</li>
+                    <li>{{ $msg }}</li>
                 @endforeach
             </ul>
         </div>
@@ -174,7 +174,7 @@
                     </div>
 
                     <div class="d-flex gap-2 justify-content-end mt-4 pt-3 border-top">
-                        <a href="{{ route('factures.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('factures.show', $facture->id) }}" class="btn btn-outline-secondary">
                             <i class="bi bi-x-lg me-1"></i> Annuler
                         </a>
                         <button type="submit" class="btn btn-primary">

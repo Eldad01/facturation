@@ -98,8 +98,8 @@ class DashboardController extends Controller
 
         $produitsCritiques = Produit::whereColumn('stock', '<=', 'seuil_alerte')
             ->orderBy('stock', 'asc')
-            ->limit(5)
-            ->get();
+            ->paginate(5, ['*'], 'stock_page')
+            ->withQueryString();
 
         $topProduitsSortie = MouvementStock::selectRaw('produit_id, SUM(quantite) as total')
             ->where('type', 'sortie')
@@ -115,8 +115,8 @@ class DashboardController extends Controller
          *  ========================= */
         $recentFactures = Facture::with('client')
             ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
+            ->paginate(5, ['*'], 'factures_page')
+            ->withQueryString();
 
         $recentMouvements = MouvementStock::with('produit')
             ->orderByDesc('created_at')
@@ -188,8 +188,8 @@ class DashboardController extends Controller
         $recentFactures = \App\Models\Facture::with('client')
                             ->where('user_id', auth()->id())
                             ->orderByDesc('created_at')
-                            ->limit(5)
-                            ->get();
+                            ->paginate(5, ['*'], 'factures_page')
+                            ->withQueryString();
 
         // Clients récents
         $recentClients = \App\Models\Client::orderByDesc('created_at')->limit(5)->get();
@@ -197,7 +197,8 @@ class DashboardController extends Controller
         // Produits en alerte (stock <= seuil_alerte)
         $produitsEnAlerte = \App\Models\Produit::whereColumn('stock', '<=', 'seuil_alerte')
             ->orderBy('stock', 'asc')
-            ->get();
+            ->paginate(5, ['*'], 'stock_page')
+            ->withQueryString();
 
         return view('dashboard.employe', compact(
             'produitsCount',

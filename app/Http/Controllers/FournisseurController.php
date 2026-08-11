@@ -100,6 +100,11 @@ class FournisseurController extends Controller
 
     public function destroy(Fournisseur $fournisseur)
     {
+        if ($fournisseur->commandes()->exists()) {
+            return redirect()->route('fournisseurs.index')
+                ->with('error', 'Ce fournisseur a des commandes d\'achat associées et ne peut pas être supprimé.');
+        }
+
         $nom = $fournisseur->nom;
         $fournisseur->delete();
 

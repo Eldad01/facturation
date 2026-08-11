@@ -23,7 +23,7 @@ class ReceptionAchat extends Model
 
     public function commande()
     {
-        return $this->belongsTo(CommandeAchat::class);
+        return $this->belongsTo(CommandeAchat::class, 'commande_achat_id');
     }
 
     public function lignes()

@@ -13,7 +13,7 @@
         <a href="{{ route('factures.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Nouveau recu
         </a>
-        <a href="{{ route('factures.create', ['type' => 'pro-forma']) }}" class="btn btn-outline-primary">
+        <a href="{{ route('devis.create') }}" class="btn btn-outline-primary">
             <i class="bi bi-file-earmark-plus me-1"></i> Nouveau devis
         </a>
     </div>

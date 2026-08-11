@@ -18,11 +18,11 @@ class LigneReceptionAchat extends Model
 
     public function reception()
     {
-        return $this->belongsTo(ReceptionAchat::class);
+        return $this->belongsTo(ReceptionAchat::class, 'reception_achat_id');
     }
 
     public function ligneCommande()
     {
-        return $this->belongsTo(LigneCommandeAchat::class);
+        return $this->belongsTo(LigneCommandeAchat::class, 'ligne_commande_achat_id');
     }
 }

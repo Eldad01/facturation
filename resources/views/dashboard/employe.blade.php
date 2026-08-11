@@ -13,7 +13,7 @@
         <a href="{{ route('factures.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Nouveau recu
         </a>
-        <a href="{{ route('factures.create', ['type' => 'pro-forma']) }}" class="btn btn-outline-primary">
+        <a href="{{ route('devis.create') }}" class="btn btn-outline-primary">
             <i class="bi bi-file-earmark-plus me-1"></i> Nouveau devis
         </a>
     </div>
@@ -36,13 +36,13 @@
     </div>
 
     <div class="col-6 col-lg-3">
-        <div class="stat-card {{ $produitsEnAlerte->count() > 0 ? 'warning' : 'success' }}">
+        <div class="stat-card {{ $produitsEnAlerte->total() > 0 ? 'warning' : 'success' }}">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <div class="stat-value">{{ $produitsEnAlerte->count() }}</div>
+                    <div class="stat-value">{{ $produitsEnAlerte->total() }}</div>
                     <div class="stat-label">Produits en alerte</div>
                 </div>
-                <div class="stat-icon {{ $produitsEnAlerte->count() > 0 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success' }}">
+                <div class="stat-icon {{ $produitsEnAlerte->total() > 0 ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success' }}">
                     <i class="bi bi-exclamation-triangle"></i>
                 </div>
             </div>
@@ -96,12 +96,12 @@
 </div>
 
 {{-- Products Alert --}}
-@if($produitsEnAlerte->count() > 0)
+@if($produitsEnAlerte->total() > 0)
 <div class="modern-card mb-4 border-danger">
     <div class="card-header bg-danger-subtle text-danger d-flex align-items-center gap-2">
         <i class="bi bi-exclamation-triangle"></i>
         <span class="me-auto">Produits en alerte de stock</span>
-        <span class="badge bg-danger">{{ $produitsEnAlerte->count() }}</span>
+        <span class="badge bg-danger">{{ $produitsEnAlerte->total() }}</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -131,6 +131,25 @@
             </table>
         </div>
     </div>
+    @if($produitsEnAlerte->hasPages())
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
+                @foreach ($produitsEnAlerte->links()->elements as $element)
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @if ($page == $produitsEnAlerte->currentPage())
+                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+            </ul>
+        </nav>
+    </div>
+    @endif
 </div>
 @endif
 
@@ -185,7 +204,7 @@
 <div class="modern-card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-file-text me-2"></i>Factures recentes</span>
-        <a href="{{ route('factures.index') }}" class="btn btn-sm btn-outline-secondary">
+        <a href="{{ route('factures.index', ['tab' => 'attente']) }}" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-arrow-right"></i> Voir tout
         </a>
     </div>
@@ -238,5 +257,24 @@
             </div>
         @endif
     </div>
+    @if($recentFactures->hasPages())
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
+                @foreach ($recentFactures->links()->elements as $element)
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @if ($page == $recentFactures->currentPage())
+                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+            </ul>
+        </nav>
+    </div>
+    @endif
 </div>
 @endsection

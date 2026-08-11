@@ -120,11 +120,16 @@
                                 <td class="text-end">
                                     @auth
                                         @if(auth()->user()->isAdmin())
-                                            <a href="{{ route('fournisseurs.unlink-product', [$fournisseur->id, $produit->id]) }}"
-                                               onclick="return confirm('Êtes-vous sûr?')"
-                                               class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </a>
+                                            <form action="{{ route('fournisseurs.unlink-product', [$fournisseur->id, $produit->id]) }}"
+                                                  method="POST"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Êtes-vous sûr?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
                                         @endif
                                     @endauth
                                 </td>
@@ -147,7 +152,7 @@
         <span><i class="bi bi-receipt me-2"></i>Commandes récentes</span>
     </div>
     <div class="card-body p-0">
-        @if($receptions->count() > 0)
+        @if($commandes->count() > 0)
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0">
                     <thead>
