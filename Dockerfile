@@ -40,6 +40,7 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 RUN a2enmod rewrite
 RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 RUN sed -i "s|DocumentRoot /var/www/html|DocumentRoot /var/www/html/public|g" /etc/apache2/sites-available/000-default.conf
+RUN grep -n "DocumentRoot" /etc/apache2/sites-available/000-default.conf
 RUN chmod +x start.sh
 
 # Exposer le port 80
