@@ -1,0 +1,63 @@
+services:
+
+  app:
+    image: eldad01/facturation:latest
+    container_name: facturation_app
+    restart: unless-stopped
+
+    ports:
+      - "8080:80"
+
+    environment:
+      APP_NAME: Facturation
+      APP_ENV: production
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: "false"
+      APP_URL: ${APP_URL}
+
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: facturation
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      LOG_CHANNEL: stack
+      LOG_LEVEL: error
+
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+      FILESYSTEM_DISK: local
+      QUEUE_CONNECTION: sync
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+
+  db:
+    image: postgres:16
+    container_name: facturation_db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: facturation
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U postgres -d facturation"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+volumes:
+  postgres_data:
