@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Client;
 use App\Models\Facture;
 use App\Models\LigneFacture;
+use App\Models\LignePaiement;
 use App\Models\MouvementStock;
 use App\Models\Paiement;
 use App\Models\Produit;
@@ -133,21 +134,103 @@ class PaginationBoostSeeder extends Seeder
             $facture->update(['total' => $totalTtc]);
 
             if ($typeDocument === 'recu' && fake()->boolean(50)) {
-                $montantPaye = fake()->boolean(70) ? $totalTtc : (int) round($totalTtc * fake()->randomFloat(2, 0.3, 0.7));
-
-                Paiement::create([
-                    'facture_id' => $facture->id,
-                    'montant' => $montantPaye,
-                    'mode' => fake()->randomElement(['especes', 'mobile_money', 'virement', 'carte']),
-                    'date_paiement' => $date,
-                ]);
-
-                $facture->update([
-                    'montant_paye' => $montantPaye,
-                    'status' => $montantPaye >= $totalTtc ? 'payee' : 'partiellement_payee',
-                ]);
+                if (fake()->boolean(70)) {
+                    $this->payerLignesFacture($facture, $facture->lignes->pluck('quantite', 'id')->toArray(), $date);
+                } else {
+                    $this->payerPartiellement($facture, $date, 0.3, 0.7);
+                }
             }
         }
+    }
+
+    /**
+     * Règle un pourcentage aléatoire des unités de la facture (paiement partiel),
+     * en respectant la règle "une pièce se paie en entier, jamais en tranches".
+     */
+    private function payerPartiellement(Facture $facture, \DateTime $date, float $min, float $max): void
+    {
+        $lignes = $facture->lignes;
+        $totalUnites = $lignes->sum('quantite');
+
+        if ($totalUnites <= 1) {
+            return;
+        }
+
+        $fraction = fake()->randomFloat(2, $min, $max);
+        $unitesAPayer = max(1, min($totalUnites - 1, (int) round($totalUnites * $fraction)));
+
+        $selections = [];
+        $restant = $unitesAPayer;
+
+        foreach ($lignes->shuffle() as $ligne) {
+            if ($restant <= 0) {
+                break;
+            }
+            $qte = min($ligne->quantite, $restant);
+            $selections[$ligne->id] = $qte;
+            $restant -= $qte;
+        }
+
+        $this->payerLignesFacture($facture, $selections, $date);
+    }
+
+    /**
+     * Enregistre un paiement couvrant les quantités données par ligne
+     * (reproduit exactement la logique de PaiementController::store()).
+     *
+     * @param array<int,int> $selections [ligne_facture_id => quantite]
+     */
+    private function payerLignesFacture(Facture $facture, array $selections, \DateTime $date): void
+    {
+        $selections = array_filter($selections, fn($q) => $q > 0);
+
+        if (empty($selections)) {
+            return;
+        }
+
+        $paiement = Paiement::create([
+            'facture_id' => $facture->id,
+            'montant' => 0,
+            'mode' => fake()->randomElement(['especes', 'mobile_money', 'virement', 'carte']),
+            'date_paiement' => $date,
+        ]);
+        $paiement->created_at = $date;
+        $paiement->updated_at = $date;
+        $paiement->save();
+
+        $montantTotal = 0;
+
+        foreach ($selections as $ligneId => $quantite) {
+            $ligne = LigneFacture::find($ligneId);
+            $prixUnitaireNet = $ligne->quantite > 0 ? $ligne->total_ligne / $ligne->quantite : 0;
+            $nouvelleQuantitePayee = $ligne->quantite_payee + $quantite;
+
+            if ($nouvelleQuantitePayee >= $ligne->quantite) {
+                $montantDejaPaye = LignePaiement::where('ligne_facture_id', $ligne->id)->sum('montant');
+                $montantLigne = $ligne->total_ligne - $montantDejaPaye;
+            } else {
+                $montantLigne = (int) round($prixUnitaireNet * $quantite);
+            }
+
+            LignePaiement::create([
+                'paiement_id' => $paiement->id,
+                'ligne_facture_id' => $ligne->id,
+                'quantite' => $quantite,
+                'montant' => $montantLigne,
+            ]);
+
+            $ligne->update(['quantite_payee' => $nouvelleQuantitePayee]);
+
+            $montantTotal += $montantLigne;
+        }
+
+        $paiement->update(['montant' => $montantTotal]);
+
+        $facture->montant_paye = $facture->montant_paye + $montantTotal;
+        $toutesPayees = $facture->lignes()->whereColumn('quantite_payee', '<', 'quantite')->doesntExist();
+        $facture->status = $toutesPayees ? 'payee' : 'partiellement_payee';
+        $facture->date_paiement = $toutesPayees ? $date : null;
+        $facture->save();
     }
 
     private function numeroUnique(string $prefix, \DateTime $date, array &$compteur): string
