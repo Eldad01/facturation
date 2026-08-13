@@ -11,10 +11,10 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="{{ route('factures.create') }}" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-lg me-1"></i><span class="d-none d-md-inline">Nouveau recu</span>
+            <i class="bi bi-plus-lg me-1"></i><span class="d-none d-sm-inline">Nouveau recu</span>
         </a>
         <a href="{{ route('devis.create') }}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-file-earmark-plus me-1"></i><span class="d-none d-md-inline">Nouveau devis</span>
+            <i class="bi bi-file-earmark-plus me-1"></i><span class="d-none d-sm-inline">Nouveau devis</span>
         </a>
     </div>
 </div>
@@ -105,7 +105,7 @@
                             <td class="text-end d-none d-md-table-cell">{{ $produit->seuil_alerte }}</td>
                             <td class="text-end">
                                 <a href="{{ route('produits.reapprovisionnement', $produit->id) }}" class="btn btn-sm btn-warning">
-                                    <i class="bi bi-plus-circle"></i><span class="d-none d-md-inline ms-1">Reapprovisionner</span>
+                                    <i class="bi bi-plus-circle"></i><span class="d-none d-sm-inline ms-1">Reapprovisionner</span>
                                 </a>
                             </td>
                         </tr>
@@ -162,20 +162,21 @@
                 <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th>Numero</th>
                             <th>Client</th>
-                            <th>Type</th>
+                            <th class="d-none d-md-table-cell">Type</th>
                             <th class="text-end">Total</th>
-                            <th>Date</th>
+                            <th class="d-none d-md-table-cell">Date</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($recentFactures as $facture)
                             <tr>
-                                <td class="fw-semibold">{{ $facture->numero_facture }}</td>
-                                <td>{{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '' }}</td>
-                                <td>
+                                <td class="fw-semibold">
+                                    {{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '' }}
+                                    <span class="d-block small text-muted fw-normal">{{ $facture->numero_facture }}</span>
+                                </td>
+                                <td class="d-none d-md-table-cell">
                                     @if($facture->type_document === 'recu')
                                         <span class="badge bg-success-subtle text-success">Recu</span>
                                     @else
@@ -183,7 +184,7 @@
                                     @endif
                                 </td>
                                 <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
-                                <td class="text-muted">{{ $facture->created_at->format('d/m/Y') }}</td>
+                                <td class="text-muted d-none d-md-table-cell">{{ $facture->created_at->format('d/m/Y') }}</td>
                                 <td>
                                     <a href="{{ route('factures.show', $facture->id) }}" class="btn btn-sm btn-outline-primary">
                                         <i class="bi bi-eye"></i>

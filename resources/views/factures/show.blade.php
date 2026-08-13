@@ -99,20 +99,23 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Produit</th>
-                                <th class="text-center" style="width:100px;">Quantite</th>
-                                <th class="text-end" style="width:150px;">Prix unitaire</th>
-                                <th class="text-end" style="width:150px;">Total</th>
+                                <th class="text-center" style="width:80px;">Qte</th>
+                                <th class="text-end d-none d-md-table-cell" style="width:150px;">Prix unitaire</th>
+                                <th class="text-end" style="width:130px;">Total</th>
                                 @if($facture->type_document === 'recu')
-                                    <th class="text-center" style="width:120px;">Payé</th>
+                                    <th class="text-center" style="width:100px;">Payé</th>
                                 @endif
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($facture->lignes as $ligne)
                                 <tr>
-                                    <td>{{ $ligne->produit->nom ?? '—' }}</td>
+                                    <td>
+                                        {{ $ligne->produit->nom ?? '—' }}
+                                        <span class="d-md-none d-block small text-muted">{{ number_format($ligne->prix_unitaire, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }} / unite</span>
+                                    </td>
                                     <td class="text-center">{{ $ligne->quantite }}</td>
-                                    <td class="text-end">{{ number_format($ligne->prix_unitaire, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
+                                    <td class="text-end d-none d-md-table-cell">{{ number_format($ligne->prix_unitaire, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td class="text-end fw-semibold">{{ number_format($ligne->total_ligne, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     @if($facture->type_document === 'recu')
                                         <td class="text-center">
@@ -185,9 +188,9 @@
                                         <th>Date</th>
                                         <th>Pièces réglées</th>
                                         <th>Montant</th>
-                                        <th>Mode</th>
-                                        <th>Référence</th>
-                                        <th>Note</th>
+                                        <th class="d-none d-md-table-cell">Mode</th>
+                                        <th class="d-none d-lg-table-cell">Référence</th>
+                                        <th class="d-none d-lg-table-cell">Note</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -198,11 +201,12 @@
                                                 @foreach($paiement->lignes as $lp)
                                                     {{ $lp->quantite }} × {{ $lp->ligneFacture->produit->nom ?? '—' }}@if(!$loop->last), @endif
                                                 @endforeach
+                                                <span class="d-md-none d-block text-muted">{{ ucfirst(str_replace('_', ' ', $paiement->mode)) }}</span>
                                             </td>
                                             <td class="text-end">{{ number_format($paiement->montant, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
-                                            <td>{{ ucfirst(str_replace('_', ' ', $paiement->mode)) }}</td>
-                                            <td>{{ $paiement->reference ?? '—' }}</td>
-                                            <td>{{ $paiement->note ?? '—' }}</td>
+                                            <td class="d-none d-md-table-cell">{{ ucfirst(str_replace('_', ' ', $paiement->mode)) }}</td>
+                                            <td class="d-none d-lg-table-cell">{{ $paiement->reference ?? '—' }}</td>
+                                            <td class="d-none d-lg-table-cell">{{ $paiement->note ?? '—' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -232,9 +236,9 @@
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Produit</th>
-                                                <th class="text-center" style="width:110px;">Restant</th>
-                                                <th class="text-center" style="width:140px;">Quantité à régler</th>
-                                                <th class="text-end" style="width:150px;">Montant</th>
+                                                <th class="text-center d-none d-sm-table-cell" style="width:90px;">Restant</th>
+                                                <th class="text-center" style="width:110px;">Qte à régler</th>
+                                                <th class="text-end" style="width:130px;">Montant</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -244,8 +248,11 @@
                                                         $prixUnitaireNet = $ligne->quantite > 0 ? round($ligne->total_ligne / $ligne->quantite) : 0;
                                                     @endphp
                                                     <tr>
-                                                        <td class="align-middle">{{ $ligne->produit->nom ?? '—' }}</td>
-                                                        <td class="text-center align-middle">{{ $ligne->quantite_restante }}</td>
+                                                        <td class="align-middle">
+                                                            {{ $ligne->produit->nom ?? '—' }}
+                                                            <span class="d-sm-none d-block small text-muted">Restant : {{ $ligne->quantite_restante }}</span>
+                                                        </td>
+                                                        <td class="text-center align-middle d-none d-sm-table-cell">{{ $ligne->quantite_restante }}</td>
                                                         <td class="text-center">
                                                             <input type="hidden" name="lignes[{{ $ligne->id }}][ligne_id]" value="{{ $ligne->id }}">
                                                             <input type="number"

@@ -54,25 +54,28 @@
                 <thead>
                     <tr>
                         <th>Nom</th>
-                        <th>Prenom(s)</th>
-                        <th>Telephone</th>
+                        <th class="d-none d-sm-table-cell">Telephone</th>
                         <th class="d-none d-lg-table-cell">Email</th>
-                        <th>Adresse</th>
+                        <th class="d-none d-md-table-cell">Adresse</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($clients as $client)
                         <tr>
-                            <td class="fw-semibold">{{ $client->nom }}</td>
-                            <td>{{ $client->prenom }}</td>
-                            <td>
+                            <td class="fw-semibold">
+                                {{ $client->nom }} {{ $client->prenom }}
+                                <a href="tel:{{ $client->telephone }}" class="text-decoration-none d-sm-none d-block small text-muted">
+                                    <i class="bi bi-telephone me-1"></i>{{ $client->telephone }}
+                                </a>
+                            </td>
+                            <td class="d-none d-sm-table-cell">
                                 <a href="tel:{{ $client->telephone }}" class="text-decoration-none">
                                     <i class="bi bi-telephone me-1"></i>{{ $client->telephone }}
                                 </a>
                             </td>
                             <td class="d-none d-lg-table-cell">{{ $client->email ?? '-' }}</td>
-                            <td>{{ $client->adresse ?? '-' }}</td>
+                            <td class="d-none d-md-table-cell">{{ $client->adresse ?? '-' }}</td>
                             <td class="text-end">
                                 <div class="action-buttons justify-content-end">
                                     <a href="{{ route('clients.show', $client->id) }}" 
@@ -102,7 +105,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6">
+                            <td colspan="5">
                                 <div class="empty-state">
                                     <i class="bi bi-people"></i>
                                     <h5>Aucun client trouve</h5>

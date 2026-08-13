@@ -82,7 +82,7 @@
                             <tr>
                                 <th class="small">Numero</th>
                                 <th class="small">Client</th>
-                                <th class="small">Échéance</th>
+                                <th class="small d-none d-md-table-cell">Échéance</th>
                                 <th class="text-end small">Total</th>
                                 <th class="text-end small">Actions</th>
                             </tr>
@@ -92,7 +92,7 @@
                                 <tr>
                                     <td class="fw-semibold">{{ $facture->numero_facture }}</td>
                                     <td>{{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}</td>
-                                    <td>{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
+                                    <td class="d-none d-md-table-cell">{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
                                     <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td class="text-end">
                                         <div class="action-buttons justify-content-end">
@@ -215,12 +215,11 @@
                     <table class="table table-hover table-sm mb-0">
                         <thead>
                             <tr>
-                                <th class="small">Numero</th>
                                 <th class="small">Client</th>
+                                <th class="small d-none d-md-table-cell">Échéance</th>
+                                <th class="text-end small d-none d-md-table-cell">Total</th>
                                 <th class="small">Statut</th>
-                                <th class="small">Échéance</th>
-                                <th class="text-end small">Total</th>
-                                <th class="text-end small">Reste à payer</th>
+                                <th class="text-end small">Reste</th>
                                 <th class="text-end small">Actions</th>
                             </tr>
                         </thead>
@@ -228,22 +227,24 @@
                             @forelse($enAttente as $facture)
                                 @php $enRetard = $facture->isOverdue(); @endphp
                                 <tr class="{{ $enRetard ? 'table-danger' : '' }}">
-                                    <td class="fw-semibold">{{ $facture->numero_facture }}</td>
-                                    <td>{{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}</td>
+                                    <td class="fw-semibold">
+                                        {{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}
+                                        <span class="d-block small text-muted fw-normal">{{ $facture->numero_facture }}</span>
+                                    </td>
+                                    <td class="d-none d-md-table-cell">{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
+                                    <td class="text-end d-none d-md-table-cell">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td>
                                         @if($facture->status === 'partiellement_payee')
-                                            <span class="badge bg-warning text-dark">Partiellement payée</span>
+                                            <span class="badge bg-warning text-dark d-block d-md-inline">Partiellement payée</span>
                                         @elseif($facture->status === 'annule')
-                                            <span class="badge bg-secondary">Annulée</span>
+                                            <span class="badge bg-secondary d-block d-md-inline">Annulée</span>
                                         @else
-                                            <span class="badge bg-secondary">Non payée</span>
+                                            <span class="badge bg-secondary d-block d-md-inline">Non payée</span>
                                         @endif
                                         @if($enRetard)
-                                            <span class="badge bg-danger">En retard</span>
+                                            <span class="badge bg-danger d-block d-md-inline">En retard</span>
                                         @endif
                                     </td>
-                                    <td>{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
-                                    <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td class="text-end fw-bold text-danger">{{ number_format($facture->balance, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td class="text-end">
                                         <div class="action-buttons justify-content-end">
@@ -258,7 +259,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7">
+                                    <td colspan="6">
                                         <div class="empty-state py-3">
                                             <i class="bi bi-hourglass-split"></i>
                                             <h5>Rien en attente</h5>
@@ -335,10 +336,9 @@
                     <table class="table table-hover table-sm mb-0">
                         <thead>
                             <tr>
-                                <th class="small">Numero</th>
                                 <th class="small">Client</th>
-                                <th class="small">Statut</th>
-                                <th class="small">Date</th>
+                                <th class="small d-none d-md-table-cell">Statut</th>
+                                <th class="small d-none d-md-table-cell">Date</th>
                                 <th class="text-end small">Total</th>
                                 <th class="text-end small">Actions</th>
                             </tr>
@@ -346,10 +346,12 @@
                         <tbody>
                             @forelse($recus as $facture)
                                 <tr>
-                                    <td class="fw-semibold">{{ $facture->numero_facture }}</td>
-                                    <td>{{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}</td>
-                                    <td><span class="badge bg-success">Payée</span></td>
-                                    <td>{{ $facture->created_at->format('d/m/Y') }}</td>
+                                    <td class="fw-semibold">
+                                        {{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}
+                                        <span class="d-block small text-muted fw-normal">{{ $facture->numero_facture }}</span>
+                                    </td>
+                                    <td class="d-none d-md-table-cell"><span class="badge bg-success">Payée</span></td>
+                                    <td class="d-none d-md-table-cell">{{ $facture->created_at->format('d/m/Y') }}</td>
                                     <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td class="text-end">
                                         <div class="action-buttons justify-content-end">
@@ -364,7 +366,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6">
+                                    <td colspan="5">
                                         <div class="empty-state py-3">
                                             <i class="bi bi-file-text"></i>
                                             <h5>Aucune facture payée</h5>
