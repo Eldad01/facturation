@@ -9,6 +9,7 @@ use App\Services\ActivityLogger;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class SettingController extends Controller
 {
@@ -147,7 +148,7 @@ class SettingController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
             'role' => 'required|in:admin,employe',
         ]);
 
@@ -191,7 +192,7 @@ class SettingController extends Controller
 
         if ($request->filled('password')) {
             $request->validate([
-                'password' => 'string|min:8|confirmed',
+                'password' => ['string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
             ]);
             $user->password = Hash::make($request->password);
         }
@@ -265,7 +266,7 @@ class SettingController extends Controller
     public function resetPassword(Request $request, User $user)
     {
         $request->validate([
-            'new_password' => 'required|string|min:8|confirmed',
+            'new_password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ]);
 
         $user->password = Hash::make($request->new_password);

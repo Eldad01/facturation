@@ -63,6 +63,13 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
+        },
+        "audit": {
+            "ignore": {
+                "PKSA-3r5d-mb8f-1qw9": "CRLF injection in default email validation rule - only fixed in Laravel 12.60+/13.10+, requires major upgrade. Not exploitable here: app never sends email (no Mail:: usage anywhere).",
+                "PKSA-m5cs-t1y6-qpcs": "Temporary signed URL path confusion - only fixed in Laravel 12.61+/13.12+, requires major upgrade. Not exploitable here: app never uses signed URLs (no temporarySignedRoute usage).",
+                "PKSA-mdq4-51ck-6kdq": "Same CRLF injection as PKSA-3r5d-mb8f-1qw9 (duplicate advisory entry)."
+            }
         }
     },
     "minimum-stability": "stable",

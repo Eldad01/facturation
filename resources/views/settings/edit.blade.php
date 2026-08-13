@@ -316,6 +316,7 @@
                                                             <div class="mb-3">
                                                                 <label class="form-label">Nouveau mot de passe (laisser vide pour garder l'actuel)</label>
                                                                 <input type="password" name="password" class="form-control">
+                                                                <small class="form-text text-muted">8 caractères min., avec majuscule, minuscule et chiffre.</small>
                                                             </div>
                                                             <div class="mb-3">
                                                                 <label class="form-label">Role</label>
@@ -352,6 +353,7 @@
                                                             <div class="mb-3">
                                                                 <label class="form-label">Nouveau mot de passe</label>
                                                                 <input type="password" name="new_password" class="form-control" required minlength="8">
+                                                                <small class="form-text text-muted">8 caractères min., avec majuscule, minuscule et chiffre.</small>
                                                             </div>
                                                             <div class="mb-3">
                                                                 <label class="form-label">Confirmer le mot de passe</label>
@@ -403,6 +405,7 @@
                             <div class="mb-3">
                                 <label class="form-label">Mot de passe</label>
                                 <input type="password" name="password" class="form-control" required minlength="8">
+                                <small class="form-text text-muted">8 caractères min., avec majuscule, minuscule et chiffre.</small>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Confirmer le mot de passe</label>
