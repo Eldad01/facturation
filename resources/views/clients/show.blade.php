@@ -7,7 +7,14 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Details du client</h1>
-        <p class="page-subtitle">{{ $client->nomComplet }}</p>
+        <p class="page-subtitle">
+            {{ $client->nomComplet }}
+            @if($client->isEntreprise())
+                <span class="badge bg-primary-subtle text-primary ms-1"><i class="bi bi-building me-1"></i>Entreprise</span>
+            @else
+                <span class="badge bg-secondary-subtle text-secondary ms-1"><i class="bi bi-person me-1"></i>Particulier</span>
+            @endif
+        </p>
     </div>
     <a href="{{ route('clients.index') }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Retour
@@ -57,7 +64,39 @@
                 </div>
             </div>
         </div>
-        
+
+        @if($client->isEntreprise())
+            <div class="mt-3 pt-3 border-top">
+                <h5 class="fw-bold mb-3"><i class="bi bi-building me-2"></i>Informations entreprise</h5>
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <div class="mb-2">
+                            <span class="text-muted">IFU:</span>
+                            <span class="fw-semibold ms-2">{{ $client->ifu ?? '-' }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted">RCCM:</span>
+                            <span class="fw-semibold ms-2">{{ $client->rccm ?? '-' }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted">Boîte postale:</span>
+                            <span class="fw-semibold ms-2">{{ $client->boite_postale ?? '-' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="mb-2">
+                            <span class="text-muted">Régime d'imposition:</span>
+                            <span class="fw-semibold ms-2">{{ $client->regime_imposition ?? '-' }}</span>
+                        </div>
+                        <div class="mb-2">
+                            <span class="text-muted">Contact référent:</span>
+                            <span class="fw-semibold ms-2">{{ $client->contact_nom ?? '-' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="mt-3 pt-3 border-top d-flex gap-2">
             <a href="{{ route('clients.edit', $client->id) }}" class="btn btn-outline-primary">
                 <i class="bi bi-pencil me-1"></i> Modifier

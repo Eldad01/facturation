@@ -1000,10 +1000,18 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('produits*') ? 'active' : '' }}" 
+                    <a class="nav-link {{ request()->routeIs('produits*') ? 'active' : '' }}"
                        href="{{ route('produits.index') }}">
                         <i class="bi bi-box-seam"></i>
                         <span>Produits</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('inventaires*') ? 'active' : '' }}"
+                       href="{{ route('inventaires.index') }}">
+                        <i class="bi bi-clipboard-check"></i>
+                        <span>Inventaire</span>
                     </a>
                 </li>
 
@@ -1017,7 +1025,15 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('settings*') ? 'active' : '' }}" 
+                    <a class="nav-link {{ request()->routeIs('rapports*') ? 'active' : '' }}"
+                       href="{{ route('rapports.index') }}">
+                        <i class="bi bi-bar-chart"></i>
+                        <span>Rapports</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('settings*') ? 'active' : '' }}"
                        href="{{ route('settings.edit') }}">
                         <i class="bi bi-gear"></i>
                         <span>Parametres</span>

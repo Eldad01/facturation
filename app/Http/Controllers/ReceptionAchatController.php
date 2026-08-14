@@ -76,18 +76,32 @@ class ReceptionAchatController extends Controller
                         'quantite_reçue' => $ligne->quantite_reçue + $quantiteReçue,
                     ]);
 
-                    // Créer le mouvement de stock (entrée)
+                    // Calcul du CUMP (Coût Unitaire Moyen Pondéré) avant que le stock ne soit incrémenté
+                    $produit = \App\Models\Produit::where('id', $ligne->produit_id)->lockForUpdate()->first();
+                    $stockAvant = $produit->stock;
+                    $ancienCump = $produit->prix_achat ?? 0;
+                    $prixLigne = $ligne->prix_unitaire;
+
+                    $diviseur = $stockAvant + $quantiteReçue;
+                    $nouveauCump = $diviseur > 0
+                        ? (int) round((($stockAvant * $ancienCump) + ($quantiteReçue * $prixLigne)) / $diviseur)
+                        : $prixLigne;
+
+                    // Créer le mouvement de stock (entrée) - incrémente automatiquement produit.stock
                     MouvementStock::create([
                         'produit_id' => $ligne->produit_id,
                         'type' => 'entree',
                         'quantite' => $quantiteReçue,
                         'raison' => "Réception achat - Commande {$commande->numero}",
+                        'prix_unitaire' => $prixLigne,
                     ]);
+
+                    $produit->update(['prix_achat' => $nouveauCump]);
 
                     // Log d'activité
                     ActivityLogger::stockUpdate(
                         $ligne->produit,
-                        "Réception du produit {$ligne->produit->nom} - Commande {$commande->numero}",
+                        "Réception du produit {$ligne->produit->nom} - Commande {$commande->numero} - Nouveau CUMP: {$nouveauCump}",
                         $quantiteReçue
                     );
                 }

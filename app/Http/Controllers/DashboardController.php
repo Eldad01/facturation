@@ -8,7 +8,6 @@ use App\Models\Client;
 use App\Models\Produit;
 use App\Models\MouvementStock;
 use Carbon\Carbon;
-use PDF;
 
 class DashboardController extends Controller
 {
@@ -210,38 +209,5 @@ class DashboardController extends Controller
             'recuMonthSum',
             'produitsEnAlerte'
         ));
-    }
-
-    /**
-     * Rapport PDF
-     */
-    public function exportPdf(Request $request, $period = 'daily')
-    {
-        // Vérification et valeur par défaut du paramètre period
-        $period = $period ?? 'daily';
-        $date = $request->date ? Carbon::parse($request->date) : now();
-        $start = $end = $date;
-
-        if ($period === 'daily') {
-            $start = $date->copy()->startOfDay();
-            $end   = $date->copy()->endOfDay();
-        } elseif ($period === 'monthly') {
-            $start = $date->copy()->startOfMonth();
-            $end   = $date->copy()->endOfMonth();
-        } elseif ($period === 'yearly') {
-            $start = $date->copy()->startOfYear();
-            $end   = $date->copy()->endOfYear();
-        }
-
-        $factures = Facture::with('client')
-            ->where('type_document', 'recu')
-            ->whereBetween('created_at', [$start, $end])
-            ->get();
-
-        $total = $factures->sum('total');
-
-        $pdf = PDF::loadView('reports.sales', compact('factures', 'total', 'period', 'start', 'end'));
-
-        return $pdf->stream("rapport_{$period}.pdf");
     }
 }

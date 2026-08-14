@@ -29,8 +29,12 @@
                         <th class="text-muted small d-none d-md-table-cell">SKU</th>
                         <th class="text-end small">Prix vente</th>
                         <th class="text-end small d-none d-md-table-cell">Prix achat</th>
-                        <th class="text-center small">Stock</th>
-                        <th class="text-center small d-none d-lg-table-cell">Seuil</th>
+                        <th class="text-center small">{{ auth()->user()->isAdmin() ? 'Stock' : 'Stock théo.' }}</th>
+                        @if(auth()->user()->isAdmin())
+                            <th class="text-center small d-none d-lg-table-cell">Seuil</th>
+                        @else
+                            <th class="text-center small d-none d-lg-table-cell">Stock réel</th>
+                        @endif
                         <th class="text-end small">Actions</th>
                     </tr>
                 </thead>
@@ -49,7 +53,11 @@
                                     <i class="bi bi-exclamation-triangle text-danger" title="Stock en alerte"></i>
                                 @endif
                             </td>
-                            <td class="text-center text-muted d-none d-lg-table-cell">{{ $produit->seuil_alerte }}</td>
+                            @if(auth()->user()->isAdmin())
+                                <td class="text-center text-muted d-none d-lg-table-cell">{{ $produit->seuil_alerte }}</td>
+                            @else
+                                <td class="text-center text-muted d-none d-lg-table-cell">{{ $produit->dernier_stock_reel ?? '—' }}</td>
+                            @endif
                             <td class="text-end">
                                 <div class="action-buttons justify-content-end">
                                     <a href="{{ route('produits.show', $produit->id) }}"

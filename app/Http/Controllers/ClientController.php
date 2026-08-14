@@ -41,9 +41,15 @@ class ClientController extends Controller
             'telephone' => ['required', 'string', 'max:20', 'unique:clients,telephone', 'regex:/^\+?\d+$/'],
             'email' => ['nullable', 'email', 'max:255', 'unique:clients,email'],
             'adresse' => 'nullable|string|max:255',
+            'type_client' => ['required', 'in:particulier,entreprise'],
+            'ifu' => 'nullable|string|max:100',
+            'rccm' => 'nullable|string|max:100',
+            'boite_postale' => 'nullable|string|max:100',
+            'regime_imposition' => 'nullable|string|max:255',
+            'contact_nom' => 'nullable|string|max:255',
         ]);
 
-        $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse');
+        $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse', 'type_client', 'ifu', 'rccm', 'boite_postale', 'regime_imposition', 'contact_nom');
         $data['nom'] = strtoupper($data['nom']);
         $data['prenom'] = ucfirst(strtolower($data['prenom']));
 
@@ -71,6 +77,12 @@ class ClientController extends Controller
             'telephone' => ['required', 'string', 'max:20', 'unique:clients,telephone,' . $client->id, 'regex:/^\+?\d+$/'],
             'email' => ['nullable', 'email', 'max:255', 'unique:clients,email,' . $client->id],
             'adresse' => 'nullable|string|max:255',
+            'type_client' => ['required', 'in:particulier,entreprise'],
+            'ifu' => 'nullable|string|max:100',
+            'rccm' => 'nullable|string|max:100',
+            'boite_postale' => 'nullable|string|max:100',
+            'regime_imposition' => 'nullable|string|max:255',
+            'contact_nom' => 'nullable|string|max:255',
         ]);
 
         $oldData = [
@@ -78,9 +90,10 @@ class ClientController extends Controller
             'prenom' => $client->prenom,
             'telephone' => $client->telephone,
             'email' => $client->email,
+            'type_client' => $client->type_client,
         ];
 
-        $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse');
+        $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse', 'type_client', 'ifu', 'rccm', 'boite_postale', 'regime_imposition', 'contact_nom');
         $data['nom'] = strtoupper($data['nom']);
         $data['prenom'] = ucfirst(strtolower($data['prenom']));
 

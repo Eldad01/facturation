@@ -328,10 +328,13 @@
         <div class="name">{{ $settings?->company_name ?? 'Votre entreprise' }}</div>
         <div class="meta">
             @if($settings?->address){{ $settings->address }}<br>@endif
+            @if($settings?->boite_postale)BP : {{ $settings->boite_postale }}<br>@endif
             @if($settings?->phone)Tél : {{ $settings->phone }}<br>@endif
             @if($settings?->email){{ $settings->email }}<br>@endif
             @if($settings?->ifu)IFU : {{ $settings->ifu }}&nbsp;&nbsp;@endif
-            @if($settings?->rccm)RCCM : {{ $settings->rccm }}@endif
+            @if($settings?->rccm)RCCM : {{ $settings->rccm }}<br>@endif
+            @if($settings?->regime_imposition)Régime : {{ $settings->regime_imposition }}<br>@endif
+            @if($settings?->contact_nom)Contact : {{ $settings->contact_nom }}@if($settings?->contact_telephone) ({{ $settings->contact_telephone }})@endif @endif
         </div>
     </div>
 
@@ -389,7 +392,14 @@
     <div class="meta">
         @if($facture->client?->telephone){{ $facture->client->telephone }}<br>@endif
         @if($facture->client?->email){{ $facture->client->email }}<br>@endif
-        @if($facture->client?->adresse){{ $facture->client->adresse }}@endif
+        @if($facture->client?->adresse){{ $facture->client->adresse }}<br>@endif
+        @if($facture->client?->isEntreprise())
+            @if($facture->client->boite_postale)BP : {{ $facture->client->boite_postale }}<br>@endif
+            @if($facture->client->ifu)IFU : {{ $facture->client->ifu }}&nbsp;&nbsp;@endif
+            @if($facture->client->rccm)RCCM : {{ $facture->client->rccm }}<br>@endif
+            @if($facture->client->regime_imposition)Régime : {{ $facture->client->regime_imposition }}<br>@endif
+            @if($facture->client->contact_nom)Contact : {{ $facture->client->contact_nom }}@endif
+        @endif
     </div>
 </div>
 
@@ -438,7 +448,18 @@
 @endphp
 
 <div class="totals-wrap">
-    <div class="totals-left"></div>
+    <div class="totals-left">
+        @if($facture->type_document === 'recu' && $settings?->banque_numero_compte)
+            <div class="meta" style="font-size: 10px;">
+                <strong>Coordonnées bancaires</strong><br>
+                @if($settings->banque_nom){{ $settings->banque_nom }}<br>@endif
+                N° compte : {{ $settings->banque_numero_compte }}
+                @if($settings->banque_autres_comptes)
+                    <br>{{ $settings->banque_autres_comptes }}
+                @endif
+            </div>
+        @endif
+    </div>
     <div class="totals-right">
         <table class="totals">
             <tr>

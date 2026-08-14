@@ -69,10 +69,25 @@
                         @endif
                     </span>
                 </div>
-                <div class="mb-2">
-                    <span class="text-muted">Seuil d'alerte:</span>
-                    <span class="fw-semibold ms-2">{{ $produit->seuil_alerte }}</span>
-                </div>
+                @if(auth()->user()->isAdmin())
+                    <div class="mb-2">
+                        <span class="text-muted">Seuil d'alerte:</span>
+                        <span class="fw-semibold ms-2">{{ $produit->seuil_alerte }}</span>
+                    </div>
+                @else
+                    <div class="mb-2">
+                        <span class="text-muted">Stock théorique:</span>
+                        <span class="fw-semibold ms-2">{{ $produit->stock_actuel }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-muted">Stock réel:</span>
+                        <span class="fw-semibold ms-2">{{ $produit->dernier_stock_reel ?? '—' }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="text-muted">Dernier inventaire:</span>
+                        <span class="fw-semibold ms-2">{{ $produit->date_dernier_inventaire?->format('d/m/Y') ?? '—' }}</span>
+                    </div>
+                @endif
                 <div class="mb-2">
                     <span class="text-muted">Date d'ajout:</span>
                     <span class="fw-semibold ms-2">{{ $produit->created_at->format('d/m/Y') }}</span>

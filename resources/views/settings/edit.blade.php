@@ -146,6 +146,88 @@
                                         @enderror
                                     </div>
                                 </div>
+
+                                <div class="col-12 mt-2">
+                                    <hr>
+                                    <h6 class="text-muted mb-3"><i class="bi bi-briefcase me-1"></i>Coordonnées bancaires &amp; légal</h6>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="boite_postale" class="form-label">
+                                        <i class="bi bi-mailbox me-1 text-warning"></i>Boîte postale
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-warning-subtle"><i class="bi bi-mailbox text-warning"></i></span>
+                                        <input type="text" name="boite_postale" id="boite_postale" class="form-control"
+                                            value="{{ old('boite_postale', $settings?->boite_postale) }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="regime_imposition" class="form-label">
+                                        <i class="bi bi-receipt me-1 text-warning"></i>Régime d'imposition
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-warning-subtle"><i class="bi bi-receipt text-warning"></i></span>
+                                        <input type="text" name="regime_imposition" id="regime_imposition" class="form-control"
+                                            value="{{ old('regime_imposition', $settings?->regime_imposition) }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="contact_nom" class="form-label">
+                                        <i class="bi bi-person-badge me-1 text-primary"></i>Nom du contact référent
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                        <input type="text" name="contact_nom" id="contact_nom" class="form-control"
+                                            value="{{ old('contact_nom', $settings?->contact_nom) }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="contact_telephone" class="form-label">
+                                        <i class="bi bi-telephone-plus me-1 text-primary"></i>Téléphone du contact
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-telephone-plus"></i></span>
+                                        <input type="text" name="contact_telephone" id="contact_telephone" class="form-control"
+                                            value="{{ old('contact_telephone', $settings?->contact_telephone) }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="banque_nom" class="form-label">
+                                        <i class="bi bi-bank2 me-1 text-success"></i>Nom de la banque
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-success-subtle"><i class="bi bi-bank2 text-success"></i></span>
+                                        <input type="text" name="banque_nom" id="banque_nom" class="form-control"
+                                            value="{{ old('banque_nom', $settings?->banque_nom) }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label for="banque_numero_compte" class="form-label">
+                                        <i class="bi bi-credit-card me-1 text-success"></i>Numéro de compte
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-success-subtle"><i class="bi bi-credit-card text-success"></i></span>
+                                        <input type="text" name="banque_numero_compte" id="banque_numero_compte" class="form-control"
+                                            value="{{ old('banque_numero_compte', $settings?->banque_numero_compte) }}">
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="banque_autres_comptes" class="form-label">
+                                        <i class="bi bi-wallet2 me-1 text-success"></i>Autres comptes (optionnel)
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-success-subtle"><i class="bi bi-wallet2 text-success"></i></span>
+                                        <textarea name="banque_autres_comptes" id="banque_autres_comptes" class="form-control" rows="2"
+                                            placeholder="Ex: Orange Money - 70 00 00 00">{{ old('banque_autres_comptes', $settings?->banque_autres_comptes) }}</textarea>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="d-grid mt-4">

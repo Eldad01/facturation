@@ -13,6 +13,8 @@ use App\Http\Controllers\PaiementController;
 use App\Http\Controllers\FournisseurController;
 use App\Http\Controllers\CommandeAchatController;
 use App\Http\Controllers\ReceptionAchatController;
+use App\Http\Controllers\InventaireController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -95,6 +97,22 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/produits', [ProduitController::class, 'index'])->name('produits.index');
     Route::get('/produits/{produit}', [ProduitController::class, 'show'])->name('produits.show');
     Route::get('/produits/{produit}/mouvements', [ProduitController::class, 'mouvements'])->name('produits.mouvements');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inventaire - Accessible par les deux roles (comptage), validation admin only
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/inventaires', [InventaireController::class, 'index'])->name('inventaires.index');
+    Route::get('/inventaires/create', [InventaireController::class, 'create'])->name('inventaires.create');
+    Route::post('/inventaires', [InventaireController::class, 'store'])->name('inventaires.store');
+    Route::get('/inventaires/{inventaire}', [InventaireController::class, 'show'])->name('inventaires.show');
+    Route::put('/inventaires/{inventaire}', [InventaireController::class, 'update'])->name('inventaires.update');
+
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/inventaires/{inventaire}/valider', [InventaireController::class, 'valider'])
+            ->name('inventaires.valider');
+    });
 
     /*
     |--------------------------------------------------------------------------
@@ -185,6 +203,27 @@ Route::middleware(['auth', 'active'])->group(function () {
 
         Route::post('/settings/users/{user}/reset-password', [SettingController::class, 'resetPassword'])
             ->name('settings.users.reset-password');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rapports/États - Admin only
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/rapports', [ReportController::class, 'index'])->name('rapports.index');
+
+        Route::get('/rapports/clients', [ReportController::class, 'clients'])->name('rapports.clients');
+        Route::get('/rapports/clients/pdf', [ReportController::class, 'clientsPdf'])->name('rapports.clients.pdf');
+
+        Route::get('/rapports/factures', [ReportController::class, 'factures'])->name('rapports.factures');
+        Route::get('/rapports/factures/pdf', [ReportController::class, 'facturesPdf'])->name('rapports.factures.pdf');
+
+        Route::get('/rapports/produits', [ReportController::class, 'produits'])->name('rapports.produits');
+        Route::get('/rapports/produits/pdf', [ReportController::class, 'produitsPdf'])->name('rapports.produits.pdf');
+
+        Route::get('/rapports/ca-benefices', [ReportController::class, 'caEtBenefices'])->name('rapports.ca_benefices');
+        Route::get('/rapports/ca-benefices/pdf', [ReportController::class, 'caEtBeneficesPdf'])->name('rapports.ca_benefices.pdf');
     });
 
     /*

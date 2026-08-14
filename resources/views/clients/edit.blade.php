@@ -19,6 +19,25 @@
                     @csrf
                     @method('PUT')
 
+                    <div class="mb-4">
+                        <label class="form-label d-block">Type de client</label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="type_client" id="type_particulier" value="particulier"
+                                   {{ old('type_client', $client->type_client) == 'particulier' ? 'checked' : '' }}
+                                   onchange="document.getElementById('entreprise-fields').classList.add('d-none')">
+                            <label class="btn btn-outline-primary" for="type_particulier">
+                                <i class="bi bi-person me-1"></i>Particulier
+                            </label>
+
+                            <input type="radio" class="btn-check" name="type_client" id="type_entreprise" value="entreprise"
+                                   {{ old('type_client', $client->type_client) == 'entreprise' ? 'checked' : '' }}
+                                   onchange="document.getElementById('entreprise-fields').classList.remove('d-none')">
+                            <label class="btn btn-outline-primary" for="type_entreprise">
+                                <i class="bi bi-building me-1"></i>Entreprise
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="nom" class="form-label">Nom</label>
                         <input type="text" 
@@ -86,6 +105,46 @@
                         @error('adresse')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
+                    </div>
+
+                    <div id="entreprise-fields" class="{{ old('type_client', $client->type_client) == 'entreprise' ? '' : 'd-none' }}">
+                        <hr>
+                        <h6 class="text-muted mb-3"><i class="bi bi-building me-1"></i>Informations entreprise <span class="text-muted fw-normal">(optionnel)</span></h6>
+
+                        <div class="mb-3">
+                            <label for="ifu" class="form-label">IFU</label>
+                            <input type="text" name="ifu" id="ifu" value="{{ old('ifu', $client->ifu) }}"
+                                   class="form-control @error('ifu') is-invalid @enderror">
+                            @error('ifu')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rccm" class="form-label">RCCM</label>
+                            <input type="text" name="rccm" id="rccm" value="{{ old('rccm', $client->rccm) }}"
+                                   class="form-control @error('rccm') is-invalid @enderror">
+                            @error('rccm')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="boite_postale" class="form-label">Boîte postale</label>
+                            <input type="text" name="boite_postale" id="boite_postale" value="{{ old('boite_postale', $client->boite_postale) }}"
+                                   class="form-control @error('boite_postale') is-invalid @enderror">
+                            @error('boite_postale')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="regime_imposition" class="form-label">Régime d'imposition</label>
+                            <input type="text" name="regime_imposition" id="regime_imposition" value="{{ old('regime_imposition', $client->regime_imposition) }}"
+                                   class="form-control @error('regime_imposition') is-invalid @enderror">
+                            @error('regime_imposition')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="contact_nom" class="form-label">Nom du contact référent</label>
+                            <input type="text" name="contact_nom" id="contact_nom" value="{{ old('contact_nom', $client->contact_nom) }}"
+                                   class="form-control @error('contact_nom') is-invalid @enderror">
+                            @error('contact_nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                     </div>
 
                     <div class="d-flex gap-2 justify-content-end">

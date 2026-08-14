@@ -13,7 +13,8 @@ class MouvementStock extends Model
         'type',
         'quantite',
         'raison',
-        'reference'
+        'reference',
+        'prix_unitaire',
     ];
 
     /* Relations */

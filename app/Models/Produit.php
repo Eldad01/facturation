@@ -17,7 +17,13 @@ class Produit extends Model
         'prix_achat',
         'prix_vente',
         'stock',
-        'seuil_alerte'
+        'seuil_alerte',
+        'dernier_stock_reel',
+        'date_dernier_inventaire',
+    ];
+
+    protected $casts = [
+        'date_dernier_inventaire' => 'datetime',
     ];
 
     /* Relations */
@@ -25,6 +31,11 @@ class Produit extends Model
     public function mouvementsStock()
     {
         return $this->hasMany(MouvementStock::class);
+    }
+
+    public function inventaireLignes()
+    {
+        return $this->hasMany(InventaireLigne::class);
     }
 
     /* Helpers */

@@ -73,6 +73,7 @@ class ProduitController extends Controller
                 'type' => 'entree',
                 'quantite' => (int) $request->stock,
                 'raison' => 'Stock initial',
+                'prix_unitaire' => (int) $request->prix_achat,
             ]);
         }
 

@@ -109,8 +109,8 @@
                 <thead>
                     <tr>
                         <th>Produit</th>
-                        <th class="text-end">Stock</th>
-                        <th class="text-end d-none d-md-table-cell">Seuil</th>
+                        <th class="text-end">Stock théo.</th>
+                        <th class="text-end d-none d-md-table-cell">Stock réel</th>
                         <th class="text-end"></th>
                     </tr>
                 </thead>
@@ -119,7 +119,7 @@
                         <tr>
                             <td class="fw-semibold">{{ $produit->nom }}</td>
                             <td class="text-end text-danger fw-bold">{{ $produit->stock }}</td>
-                            <td class="text-end d-none d-md-table-cell">{{ $produit->seuil_alerte }}</td>
+                            <td class="text-end d-none d-md-table-cell">{{ $produit->dernier_stock_reel ?? '—' }}</td>
                             <td class="text-end">
                                 <a href="{{ route('produits.show', $produit->id) }}" class="btn btn-sm btn-outline-danger">
                                     <i class="bi bi-eye"></i>

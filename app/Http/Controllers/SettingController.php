@@ -39,6 +39,13 @@ class SettingController extends Controller
             'country' => 'nullable|string|max:100',
             'national_motto' => 'nullable|string|max:255',
             'tva_default' => 'nullable|numeric|min:0|max:100',
+            'boite_postale' => 'nullable|string|max:100',
+            'regime_imposition' => 'nullable|string|max:255',
+            'contact_nom' => 'nullable|string|max:255',
+            'contact_telephone' => 'nullable|string|max:50',
+            'banque_nom' => 'nullable|string|max:255',
+            'banque_numero_compte' => 'nullable|string|max:100',
+            'banque_autres_comptes' => 'nullable|string|max:1000',
         ]);
 
         $settings = Setting::first() ?? new Setting;
@@ -58,6 +65,13 @@ class SettingController extends Controller
         $settings->country = $request->country;
         $settings->national_motto = $request->national_motto;
         $settings->tva_default = $request->tva_default ?? 0;
+        $settings->boite_postale = $request->boite_postale;
+        $settings->regime_imposition = $request->regime_imposition;
+        $settings->contact_nom = $request->contact_nom;
+        $settings->contact_telephone = $request->contact_telephone;
+        $settings->banque_nom = $request->banque_nom;
+        $settings->banque_numero_compte = $request->banque_numero_compte;
+        $settings->banque_autres_comptes = $request->banque_autres_comptes;
 
         // Upload du logo - securisation stricte
         if ($request->hasFile('logo')) {

@@ -15,6 +15,12 @@ class Client extends Model
         'telephone',
         'email',
         'adresse',
+        'type_client',
+        'ifu',
+        'rccm',
+        'boite_postale',
+        'regime_imposition',
+        'contact_nom',
     ];
 
     public function factures()
@@ -26,5 +32,10 @@ class Client extends Model
     public function getNomCompletAttribute()
     {
         return strtoupper($this->nom) . ' ' . ucfirst(strtolower($this->prenom));
+    }
+
+    public function isEntreprise(): bool
+    {
+        return $this->type_client === 'entreprise';
     }
 }
