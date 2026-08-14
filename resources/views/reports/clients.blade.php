@@ -63,5 +63,25 @@
             </table>
         </div>
     </div>
+
+    @if($clients->hasPages())
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
+                @foreach ($clients->links()->elements as $element)
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @if ($page == $clients->currentPage())
+                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+            </ul>
+        </nav>
+    </div>
+    @endif
 </div>
 @endsection

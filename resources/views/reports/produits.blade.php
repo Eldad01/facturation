@@ -19,18 +19,32 @@
     </div>
 </div>
 
-{{-- Filters (top produits period) --}}
+{{-- Filters --}}
 <form method="GET" class="modern-card mb-4">
     <div class="card-body">
         <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label">Période (top ventes)</label>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Période</label>
                 <select name="date_preset" class="form-select" onchange="this.form.submit()">
-                    <option value="month" {{ request('date_preset', 'month') == 'month' ? 'selected' : '' }}>Ce mois</option>
+                    <option value="">Personnalisée</option>
                     <option value="today" {{ request('date_preset') == 'today' ? 'selected' : '' }}>Aujourd'hui</option>
                     <option value="week" {{ request('date_preset') == 'week' ? 'selected' : '' }}>Cette semaine</option>
+                    <option value="month" {{ request('date_preset') == 'month' ? 'selected' : '' }}>Ce mois</option>
                     <option value="year" {{ request('date_preset') == 'year' ? 'selected' : '' }}>Cette année</option>
                 </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Date début</label>
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Date fin</label>
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+            </div>
+            <div class="col-12 col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-1"></i> Filtrer
+                </button>
             </div>
         </div>
     </div>
@@ -97,5 +111,25 @@
             </table>
         </div>
     </div>
+
+    @if($produits->hasPages())
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
+                @foreach ($produits->links()->elements as $element)
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @if ($page == $produits->currentPage())
+                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+            </ul>
+        </nav>
+    </div>
+    @endif
 </div>
 @endsection

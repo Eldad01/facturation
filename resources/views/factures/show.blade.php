@@ -36,8 +36,8 @@
                     <span class="text-muted">Facture</span>
                     <h4 class="mb-0 fw-bold">{{ $facture->numero_facture }}</h4>
                 </div>
-                <span class="badge {{ $facture->type_document=='pro-forma' ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success' }} fs-6">
-                    {{ ucfirst($facture->type_document) }}
+                <span class="badge {{ $facture->etat_badge_class }} fs-6">
+                    {{ $facture->etat_label }}
                 </span>
             </div>
 
@@ -60,25 +60,6 @@
                         @endif
                     </div>
                     <div class="col-12 col-md-6 text-md-end">
-                        @php
-                            $statutLabel = match(true) {
-                                $facture->status === 'annule' => 'Annulée',
-                                $facture->type_document === 'pro-forma' => 'Devis',
-                                $facture->status === 'payee' => 'Payée',
-                                $facture->status === 'partiellement_payee' => 'Partiellement payée',
-                                default => 'En attente de paiement',
-                            };
-                            $statutClass = match(true) {
-                                $facture->status === 'annule' => 'bg-secondary',
-                                $facture->type_document === 'pro-forma' => 'bg-warning-subtle text-warning',
-                                $facture->status === 'payee' => 'bg-success',
-                                $facture->status === 'partiellement_payee' => 'bg-warning text-dark',
-                                default => 'bg-secondary',
-                            };
-                        @endphp
-                        <div class="mb-2">
-                            <span class="badge {{ $statutClass }} fs-6">{{ $statutLabel }}</span>
-                        </div>
                         <h6 class="text-muted mb-2"><i class="bi bi-calendar me-1"></i>Date</h6>
                         <p class="fw-semibold mb-0">{{ $facture->created_at->format('d/m/Y') }}</p>
                         <p class="text-muted small mb-0">{{ $facture->created_at->format('H:i') }}</p>
@@ -173,7 +154,7 @@
                     <div class="col-12 col-md-4">
                         <div class="border rounded p-3 mb-3">
                             <div class="text-muted small">Statut</div>
-                            <div class="fw-bold">{{ $statutLabel }}</div>
+                            <div class="fw-bold">{{ $facture->etat_label }}</div>
                         </div>
                     </div>
                 </div>

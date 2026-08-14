@@ -75,6 +75,37 @@ class Facture extends Model
         return $this->type_document === 'recu';
     }
 
+    public function getEtatAttribute(): string
+    {
+        if ($this->status === 'annule') return 'annulee';
+        if ($this->type_document === 'pro-forma') return 'devis';
+        if ($this->status === 'payee') return 'payee';
+        if ($this->status === 'partiellement_payee') return 'partiellement_payee';
+        return 'non_payee';
+    }
+
+    public function getEtatLabelAttribute(): string
+    {
+        return match($this->etat) {
+            'devis' => 'Devis',
+            'non_payee' => 'En attente de paiement',
+            'partiellement_payee' => 'Partiellement payée',
+            'payee' => 'Payée',
+            'annulee' => 'Annulée',
+        };
+    }
+
+    public function getEtatBadgeClassAttribute(): string
+    {
+        return match($this->etat) {
+            'devis' => 'bg-warning-subtle text-warning',
+            'non_payee' => 'bg-secondary-subtle text-secondary',
+            'partiellement_payee' => 'bg-warning text-dark',
+            'payee' => 'bg-success-subtle text-success',
+            'annulee' => 'bg-secondary',
+        };
+    }
+
     public static function generateNumeroFor(string $type_document)
     {
         $prefix = $type_document === 'pro-forma' ? 'PF' : 'R';

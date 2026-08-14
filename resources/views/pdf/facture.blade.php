@@ -365,22 +365,17 @@
 
         @if($facture->type_document === 'recu')
             @php
-                $statusClass = match(true) {
-                    $facture->status === 'annule' => 'status-annule',
-                    $facture->isPaid() => 'status-payee',
-                    $facture->isPartiallyPaid() => 'status-partielle',
-                    $facture->isOverdue() => 'status-retard',
+                $statusClass = match($facture->etat) {
+                    'annulee' => 'status-annule',
+                    'payee' => 'status-payee',
+                    'partiellement_payee' => 'status-partielle',
                     default => 'status-impayee',
                 };
-                $statusLabel = match(true) {
-                    $facture->status === 'annule' => 'Annulée',
-                    $facture->isPaid() => 'Payée',
-                    $facture->isPartiallyPaid() => 'Partiellement payée',
-                    $facture->isOverdue() => 'En retard',
-                    default => 'Non payée',
-                };
             @endphp
-            <span class="status-badge {{ $statusClass }}">{{ $statusLabel }}</span>
+            <span class="status-badge {{ $statusClass }}">{{ $facture->etat_label }}</span>
+            @if($facture->isOverdue())
+                <span class="status-badge status-retard">En retard</span>
+            @endif
         @endif
     </div>
 </div>

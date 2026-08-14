@@ -1,6 +1,15 @@
-{{-- Formulaire partagé de création (devis ou facture, selon $typeDocument) --}}
-<form action="{{ route('factures.store') }}" method="POST">
+{{-- Formulaire partagé création/édition (devis ou facture, selon $typeDocument).
+     Passer $facture pour basculer en mode édition (préremplissage + soumission vers update). --}}
+@php
+    $facture = $facture ?? null;
+    $isEdit = $facture !== null;
+    $lignesPrefill = old('lignes', $isEdit ? $facture->lignes->toArray() : []);
+@endphp
+<form action="{{ $isEdit ? route('factures.update', $facture->id) : route('factures.store') }}" method="POST">
     @csrf
+    @if($isEdit)
+        @method('PUT')
+    @endif
     <input type="hidden" name="type_document" value="{{ $typeDocument }}">
 
     <div class="row g-3 mb-4">
@@ -12,7 +21,7 @@
                     required>
                 <option value="">-- Selectionner un client --</option>
                 @foreach($clients as $client)
-                    <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
+                    <option value="{{ $client->id }}" {{ old('client_id', $facture?->client_id) == $client->id ? 'selected' : '' }}>
                         {{ $client->nom }} {{ $client->prenom }}
                     </option>
                 @endforeach
@@ -28,7 +37,7 @@
                    name="date_echeance"
                    id="date_echeance"
                    class="form-control @error('date_echeance') is-invalid @enderror"
-                   value="{{ old('date_echeance') }}">
+                   value="{{ old('date_echeance', $facture?->date_echeance?->format('Y-m-d')) }}">
             @error('date_echeance')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
@@ -38,11 +47,11 @@
     <div class="row g-3 mb-4">
         <div class="col-12 col-md-6">
             <label for="remise" class="form-label">Remise facture</label>
-            <input type="number" step="0.01" name="remise" id="remise" class="form-control" value="{{ old('remise', 0) }}">
+            <input type="number" step="0.01" name="remise" id="remise" class="form-control" value="{{ old('remise', $facture?->remise ?? 0) }}">
         </div>
         <div class="col-12 col-md-6">
             <label for="tva" class="form-label">TVA (%)</label>
-            <input type="number" step="0.01" name="tva" id="tva" class="form-control" value="{{ old('tva', $app_settings?->tva_default ?? 0) }}">
+            <input type="number" step="0.01" name="tva" id="tva" class="form-control" value="{{ old('tva', $facture?->tva ?? ($app_settings?->tva_default ?? 0)) }}">
         </div>
     </div>
 
@@ -71,54 +80,52 @@
                         </td>
                     </tr>
                 @enderror
-                @if(old('lignes'))
-                    @foreach(old('lignes') as $i => $ligne)
-                        <tr class="@error("lignes.$i.quantite") table-danger @enderror">
-                            <td>
-                                <select name="lignes[{{$i}}][produit_id]" class="form-select select-produit" required>
-                                    <option value="">-- Selectionner --</option>
-                                    @foreach($produits as $produit)
-                                        <option value="{{ $produit->id }}" data-prix="{{ $produit->prix_vente }}"
-                                            {{ $ligne['produit_id']==$produit->id?'selected':'' }}>
-                                            {{ $produit->nom }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                            <td>
-                                <input type="number"
-                                    name="lignes[{{$i}}][quantite]"
-                                    class="form-control quantite @error("lignes.$i.quantite") is-invalid @enderror"
-                                    value="{{ $ligne['quantite'] }}"
-                                    min="1" required>
-                            </td>
-                            <td>
-                                <input type="number"
-                                       name="lignes[{{$i}}][prix_unitaire]"
-                                       class="form-control prix"
-                                       value="{{ $ligne['prix_unitaire'] }}"
-                                       readonly>
-                            </td>
-                            <td>
-                                <input type="number" step="0.01"
-                                       name="lignes[{{$i}}][remise]"
-                                       class="form-control remise_ligne"
-                                       value="{{ $ligne['remise'] ?? 0 }}">
-                            </td>
-                            <td>
-                                <input type="text"
-                                       class="form-control total_ligne"
-                                       value="{{ $ligne['quantite']*$ligne['prix_unitaire'] - ($ligne['remise'] ?? 0) }}"
-                                       readonly>
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-outline-danger remove_ligne">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    @endforeach
-                @endif
+                @foreach($lignesPrefill as $i => $ligne)
+                    <tr class="@error("lignes.$i.quantite") table-danger @enderror">
+                        <td>
+                            <select name="lignes[{{$i}}][produit_id]" class="form-select select-produit" required>
+                                <option value="">-- Selectionner --</option>
+                                @foreach($produits as $produit)
+                                    <option value="{{ $produit->id }}" data-prix="{{ $produit->prix_vente }}"
+                                        {{ $ligne['produit_id']==$produit->id?'selected':'' }}>
+                                        {{ $produit->nom }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number"
+                                name="lignes[{{$i}}][quantite]"
+                                class="form-control quantite @error("lignes.$i.quantite") is-invalid @enderror"
+                                value="{{ $ligne['quantite'] }}"
+                                min="1" required>
+                        </td>
+                        <td>
+                            <input type="number"
+                                   name="lignes[{{$i}}][prix_unitaire]"
+                                   class="form-control prix"
+                                   value="{{ $ligne['prix_unitaire'] }}"
+                                   readonly>
+                        </td>
+                        <td>
+                            <input type="number" step="0.01"
+                                   name="lignes[{{$i}}][remise]"
+                                   class="form-control remise_ligne"
+                                   value="{{ $ligne['remise'] ?? 0 }}">
+                        </td>
+                        <td>
+                            <input type="text"
+                                   class="form-control total_ligne"
+                                   value="{{ $ligne['quantite']*$ligne['prix_unitaire'] - ($ligne['remise'] ?? 0) }}"
+                                   readonly>
+                        </td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove_ligne">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                @endforeach
             </tbody>
         </table>
     </div>
@@ -139,7 +146,7 @@
             <i class="bi bi-x-lg me-1"></i> Annuler
         </a>
         <button type="submit" class="btn btn-primary">
-            <i class="bi bi-check-lg me-1"></i> Enregistrer
+            <i class="bi bi-check-lg me-1"></i> {{ $isEdit ? 'Mettre à jour' : 'Enregistrer' }}
         </button>
     </div>
 </form>
@@ -155,7 +162,7 @@ $(document).ready(function() {
     });
 });
 
-let index = {{ old('lignes') ? count(old('lignes')) : 0 }};
+let index = {{ count($lignesPrefill) }};
 const produitsData = @json($produits);
 
 function recalculTotalGlobal(){

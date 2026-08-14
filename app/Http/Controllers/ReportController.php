@@ -41,69 +41,71 @@ class ReportController extends Controller
 
     /* ================= ÉTAT CLIENTS ================= */
 
-    private function clientsData()
+    private function clientsQuery()
     {
         return Client::withCount('factures')
             ->withSum(['factures as total_facture' => fn ($q) => $q->where('type_document', 'recu')], 'total')
             ->withSum(['factures as total_paye' => fn ($q) => $q->where('type_document', 'recu')], 'montant_paye')
             ->orderBy('nom')
-            ->get();
+            ->orderBy('id');
     }
 
     public function clients(Request $request)
     {
-        $clients = $this->clientsData();
+        $clients = $this->clientsQuery()->paginate(10)->withQueryString();
         return view('reports.clients', compact('clients'));
     }
 
     public function clientsPdf(Request $request)
     {
-        $clients = $this->clientsData();
+        $clients = $this->clientsQuery()->get();
         $pdf = PDF::loadView('reports.clients_pdf', compact('clients'));
         return $pdf->stream('etat_clients.pdf');
     }
 
     /* ================= ÉTAT FACTURES ================= */
 
-    private function facturesData(Request $request)
+    private function facturesQuery(Request $request)
     {
         [$start, $end, $label] = $this->resolvePeriod($request);
 
-        $factures = Facture::with('client')
+        $query = Facture::with('client')
             ->where('type_document', 'recu')
             ->whereBetween('created_at', [$start, $end])
             ->orderByDesc('created_at')
-            ->get();
+            ->orderByDesc('id');
 
-        $total = $factures->sum('total');
-
-        return [$factures, $total, $start, $end, $label];
+        return [$query, $start, $end, $label];
     }
 
     public function factures(Request $request)
     {
-        [$factures, $total, $start, $end, $label] = $this->facturesData($request);
-        return view('reports.factures', compact('factures', 'total', 'start', 'end', 'label'));
+        [$query, $start, $end, $label] = $this->facturesQuery($request);
+
+        $total = (clone $query)->sum('total');
+        $nbFactures = (clone $query)->count();
+        $factures = $query->paginate(10)->withQueryString();
+
+        return view('reports.factures', compact('factures', 'total', 'nbFactures', 'start', 'end', 'label'));
     }
 
     public function facturesPdf(Request $request)
     {
-        [$factures, $total, $start, $end, $label] = $this->facturesData($request);
+        [$query, $start, $end, $label] = $this->facturesQuery($request);
+
+        $factures = $query->get();
+        $total = $factures->sum('total');
         $period = $request->input('date_preset', 'custom');
+
         $pdf = PDF::loadView('reports.sales', compact('factures', 'total', 'period', 'start', 'end'));
         return $pdf->stream('rapport_factures.pdf');
     }
 
     /* ================= ÉTAT PRODUITS ================= */
 
-    private function produitsData(Request $request)
+    private function topProduits($start, $end)
     {
-        [$start, $end, $label] = $this->resolvePeriod($request);
-
-        $produits = Produit::orderBy('nom')->get();
-        $valorisationTotale = $produits->sum(fn ($p) => $p->stock * $p->prix_achat);
-
-        $topProduits = MouvementStock::selectRaw('produit_id, SUM(quantite) as total')
+        return MouvementStock::selectRaw('produit_id, SUM(quantite) as total')
             ->where('type', 'sortie')
             ->whereBetween('created_at', [$start, $end])
             ->groupBy('produit_id')
@@ -111,19 +113,27 @@ class ReportController extends Controller
             ->with('produit')
             ->limit(10)
             ->get();
-
-        return [$produits, $valorisationTotale, $topProduits, $start, $end, $label];
     }
 
     public function produits(Request $request)
     {
-        [$produits, $valorisationTotale, $topProduits, $start, $end, $label] = $this->produitsData($request);
+        [$start, $end, $label] = $this->resolvePeriod($request);
+
+        $produits = Produit::orderBy('nom')->orderBy('id')->paginate(10)->withQueryString();
+        $valorisationTotale = Produit::selectRaw('COALESCE(SUM(stock * prix_achat), 0) as total')->value('total');
+        $topProduits = $this->topProduits($start, $end);
+
         return view('reports.produits', compact('produits', 'valorisationTotale', 'topProduits', 'start', 'end', 'label'));
     }
 
     public function produitsPdf(Request $request)
     {
-        [$produits, $valorisationTotale, $topProduits, $start, $end, $label] = $this->produitsData($request);
+        [$start, $end, $label] = $this->resolvePeriod($request);
+
+        $produits = Produit::orderBy('nom')->get();
+        $valorisationTotale = $produits->sum(fn ($p) => $p->stock * $p->prix_achat);
+        $topProduits = $this->topProduits($start, $end);
+
         $pdf = PDF::loadView('reports.produits_pdf', compact('produits', 'valorisationTotale', 'topProduits', 'start', 'end', 'label'));
         return $pdf->stream('etat_produits.pdf');
     }

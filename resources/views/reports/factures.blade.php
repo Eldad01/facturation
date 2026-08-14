@@ -54,7 +54,7 @@
     <div class="card-body">
         <span class="text-muted">Période :</span> <span class="fw-semibold">{{ $label }}</span>
         &nbsp;&middot;&nbsp;
-        <span class="text-muted">Nombre de factures :</span> <span class="fw-semibold">{{ $factures->count() }}</span>
+        <span class="text-muted">Nombre de factures :</span> <span class="fw-semibold">{{ $nbFactures }}</span>
         &nbsp;&middot;&nbsp;
         <span class="text-muted">Total encaissé :</span> <span class="fw-bold text-primary">{{ number_format($total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</span>
     </div>
@@ -82,13 +82,7 @@
                             <td class="d-none d-md-table-cell text-muted">{{ $facture->created_at->format('d/m/Y') }}</td>
                             <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                             <td class="d-none d-md-table-cell">
-                                @if($facture->isPaid())
-                                    <span class="badge bg-success-subtle text-success">Payée</span>
-                                @elseif($facture->isPartiallyPaid())
-                                    <span class="badge bg-warning-subtle text-warning">Partielle</span>
-                                @else
-                                    <span class="badge bg-secondary-subtle text-secondary">Non payée</span>
-                                @endif
+                                <span class="badge {{ $facture->etat_badge_class }}">{{ $facture->etat_label }}</span>
                             </td>
                         </tr>
                     @empty
@@ -106,5 +100,25 @@
             </table>
         </div>
     </div>
+
+    @if($factures->hasPages())
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0" style="flex-wrap: wrap;">
+                @foreach ($factures->links()->elements as $element)
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @if ($page == $factures->currentPage())
+                                <li class="page-item active"><span class="page-link" style="background-color: #0d6efd; border-color: #0d6efd;">{{ $page }}</span></li>
+                            @else
+                                <li class="page-item"><a class="page-link" href="{{ $url }}" style="color: #0d6efd;">{{ $page }}</a></li>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+            </ul>
+        </nav>
+    </div>
+    @endif
 </div>
 @endsection

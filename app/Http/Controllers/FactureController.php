@@ -80,7 +80,7 @@ class FactureController extends Controller
         $request->validate([
             'client_id' => 'required|exists:clients,id',
             'type_document' => 'required|in:pro-forma,recu',
-            'status' => 'nullable|in:brouillon,pro-forma,recu',
+            'status' => 'nullable|in:pro-forma,recu',
             'date_echeance' => 'nullable|date|after_or_equal:today',
             'tva' => 'nullable|numeric|min:0|max:100',
             'remise' => 'nullable|numeric|min:0',
@@ -295,36 +295,41 @@ class FactureController extends Controller
         return view('factures.show', compact('facture'));
     }
 
-    public function edit(Facture $facture)
+    /**
+     * Retourne un message d'erreur si $facture ne peut pas être modifiée par l'utilisateur courant, sinon null.
+     */
+    private function assertCanModify(Facture $facture): ?string
     {
-        // Only admin can edit any facture
         if (auth()->user()->isAdmin()) {
             if ($facture->isDefinitive() || $facture->status === 'annule') {
-                return back()->with('error', $facture->status === 'annule' ? 'Une facture annulée ne peut pas être modifiée.' : 'Un reçu ne peut pas être modifié.');
+                return $facture->status === 'annule' ? 'Une facture annulée ne peut pas être modifiée.' : 'Un reçu ne peut pas être modifié.';
             }
-            return view('factures.edit', [
-                'facture' => $facture->load('lignes.produit'),
-                'clients' => Client::all(),
-                'produits' => Produit::all(),
-            ]);
+            return null;
         }
 
-        // Employe can only edit their own factures
+        // Employe : uniquement ses propres devis (non validés), créés le jour même
         if ($facture->user_id !== auth()->id()) {
-            return back()->with('error', 'Vous ne pouvez pas modifier une facture créée par un autre utilisateur.');
+            return 'Vous ne pouvez pas modifier une facture créée par un autre utilisateur.';
         }
 
-        // Employe can only edit pro-forma (not validated)
         if ($facture->isDefinitive()) {
-            return back()->with('error', 'Un reçu ne peut pas être modifié.');
+            return 'Un reçu ne peut pas être modifié.';
         }
 
-        // Employe can only edit factures created today
         $today = Carbon::today();
         $factureDate = Carbon::parse($facture->created_at)->startOfDay();
-        
+
         if ($factureDate->lt($today)) {
-            return back()->with('error', 'Vous ne pouvez pas modifier une facture après le jour de création.');
+            return 'Vous ne pouvez pas modifier une facture après le jour de création.';
+        }
+
+        return null;
+    }
+
+    public function edit(Facture $facture)
+    {
+        if ($message = $this->assertCanModify($facture)) {
+            return back()->with('error', $message);
         }
 
         return view('factures.edit', [
@@ -336,34 +341,13 @@ class FactureController extends Controller
 
     public function update(Request $request, Facture $facture)
     {
-        // Only admin can update any facture
-        if (!auth()->user()->isAdmin()) {
-            // Employe can only update their own factures
-            if ($facture->user_id !== auth()->id()) {
-                return back()->with('error', 'Vous ne pouvez pas modifier une facture créée par un autre utilisateur.');
-            }
-
-            // Employe can only update pro-forma (not validated)
-            if ($facture->isDefinitive()) {
-                return back()->with('error', 'Un reçu ne peut pas être modifié.');
-            }
-
-            // Employe can only update factures created today
-            $today = Carbon::today();
-            $factureDate = Carbon::parse($facture->created_at)->startOfDay();
-            
-            if ($factureDate->lt($today)) {
-                return back()->with('error', 'Vous ne pouvez pas modifier une facture après le jour de création.');
-            }
-        } else {
-            if ($facture->isDefinitive() || $facture->status === 'annule') {
-                return back()->with('error', $facture->status === 'annule' ? 'Une facture annulée ne peut pas être modifiée.' : 'Un reçu ne peut pas être modifié.');
-            }
+        if ($message = $this->assertCanModify($facture)) {
+            return back()->with('error', $message);
         }
 
         $request->validate([
             'client_id' => 'required|exists:clients,id',
-            'status' => 'nullable|in:brouillon,pro-forma,recu',
+            'status' => 'nullable|in:pro-forma,recu',
             'tva' => 'nullable|numeric|min:0|max:100',
             'remise' => 'nullable|numeric|min:0',
             'lignes' => 'required|array|min:1',

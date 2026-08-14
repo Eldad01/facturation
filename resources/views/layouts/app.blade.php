@@ -618,6 +618,7 @@
             }
 
             .navbar-menu .nav-item {
+                display: block;
                 width: 100%;
                 margin-bottom: 0.5rem;
             }
@@ -666,6 +667,51 @@
 
             .navbar-menu .nav-link.active i {
                 color: #ffffff !important;
+            }
+
+            /* Grouped "Administration" submenu - render inline instead of floating */
+            .navbar-menu .dropdown-menu {
+                position: static !important;
+                inset: auto !important;
+                transform: none !important;
+                float: none;
+                width: 100%;
+                margin-top: 0.25rem;
+                margin-bottom: 0.5rem;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                padding: 0 0 0 1.5rem;
+                display: none;
+            }
+
+            .navbar-menu .dropdown-menu.show {
+                display: block;
+            }
+
+            .navbar-menu .dropdown-item {
+                display: flex;
+                align-items: center;
+                padding: 0.65rem 1rem;
+                border-radius: 10px;
+                font-size: 0.9rem;
+                color: #495057;
+                margin-bottom: 0.25rem;
+            }
+
+            .navbar-menu .dropdown-item:hover {
+                background: #e7f1ff;
+                color: #0d6efd;
+            }
+
+            .navbar-menu .dropdown-item.active {
+                background: #0d6efd !important;
+                color: #ffffff !important;
+                font-weight: 600;
+            }
+
+            .navbar-menu .dropdown-toggle::after {
+                margin-left: auto;
             }
 
             /* User section at bottom of sidebar */
@@ -845,6 +891,16 @@
             border: 1px solid rgba(0,0,0,0.1);
             box-shadow: var(--card-shadow-hover);
         }
+
+        /* Admin "Administration" grouped nav dropdown (desktop) */
+        .navbar-menu .nav-item.dropdown .dropdown-menu {
+            min-width: 200px;
+        }
+
+        .navbar-menu .dropdown-item.active {
+            background-color: var(--primary-color);
+            color: #ffffff !important;
+        }
         
         /* Card footer fix */
         .card-footer {
@@ -1016,28 +1072,35 @@
                 </li>
 
                 @if(auth()->user()->isAdmin())
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('historique*') ? 'active' : '' }}" 
-                       href="{{ route('historique.index') }}">
-                        <i class="bi bi-clock-history"></i>
-                        <span>Historique</span>
+                @php
+                    $adminSectionActive = request()->routeIs('historique*') || request()->routeIs('rapports*') || request()->routeIs('settings*');
+                @endphp
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle {{ $adminSectionActive ? 'active' : '' }}"
+                       href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-gear-wide-connected"></i>
+                        <span>Administration</span>
                     </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('rapports*') ? 'active' : '' }}"
-                       href="{{ route('rapports.index') }}">
-                        <i class="bi bi-bar-chart"></i>
-                        <span>Rapports</span>
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->routeIs('settings*') ? 'active' : '' }}"
-                       href="{{ route('settings.edit') }}">
-                        <i class="bi bi-gear"></i>
-                        <span>Parametres</span>
-                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('historique*') ? 'active' : '' }}"
+                               href="{{ route('historique.index') }}">
+                                <i class="bi bi-clock-history me-2"></i>Historique
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('rapports*') ? 'active' : '' }}"
+                               href="{{ route('rapports.index') }}">
+                                <i class="bi bi-bar-chart me-2"></i>Rapports
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item {{ request()->routeIs('settings*') ? 'active' : '' }}"
+                               href="{{ route('settings.edit') }}">
+                                <i class="bi bi-gear me-2"></i>Parametres
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 @endif
 

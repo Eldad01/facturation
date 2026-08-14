@@ -7,7 +7,7 @@
 <div class="page-header">
     <div>
         <h1 class="page-title">Factures</h1>
-        <p class="page-subtitle d-none d-sm-block">Devis, factures en attente et reçus payés</p>
+        <p class="page-subtitle d-none d-sm-block">Devis, factures en attente et factures payées</p>
     </div>
 </div>
 
@@ -31,7 +31,7 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link {{ $tab == 'recus' ? 'active' : '' }}"
                 id="recus-tab" data-bs-toggle="tab" data-bs-target="#recus" type="button" role="tab">
-            <i class="bi bi-check2-circle me-1"></i> Reçus
+            <i class="bi bi-check2-circle me-1"></i> Payées
         </button>
     </li>
 </ul>
@@ -234,13 +234,7 @@
                                     <td class="d-none d-md-table-cell">{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
                                     <td class="text-end d-none d-md-table-cell">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td>
-                                        @if($facture->status === 'partiellement_payee')
-                                            <span class="badge bg-warning text-dark d-block d-md-inline">Partiellement payée</span>
-                                        @elseif($facture->status === 'annule')
-                                            <span class="badge bg-secondary d-block d-md-inline">Annulée</span>
-                                        @else
-                                            <span class="badge bg-secondary d-block d-md-inline">Non payée</span>
-                                        @endif
+                                        <span class="badge {{ $facture->etat_badge_class }} d-block d-md-inline">{{ $facture->etat_label }}</span>
                                         @if($enRetard)
                                             <span class="badge bg-danger d-block d-md-inline">En retard</span>
                                         @endif
@@ -294,7 +288,7 @@
         </div>
     </div>
 
-    {{-- ===================== Onglet Reçus ===================== --}}
+    {{-- ===================== Onglet Payées ===================== --}}
     <div class="tab-pane fade {{ $tab == 'recus' ? 'show active' : '' }}" id="recus" role="tabpanel">
         <div class="d-flex justify-content-end mb-3">
             <a href="{{ route('factures.create') }}" class="btn btn-primary btn-sm">
@@ -350,7 +344,7 @@
                                         {{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}
                                         <span class="d-block small text-muted fw-normal">{{ $facture->numero_facture }}</span>
                                     </td>
-                                    <td class="d-none d-md-table-cell"><span class="badge bg-success">Payée</span></td>
+                                    <td class="d-none d-md-table-cell"><span class="badge {{ $facture->etat_badge_class }}">{{ $facture->etat_label }}</span></td>
                                     <td class="d-none d-md-table-cell">{{ $facture->created_at->format('d/m/Y') }}</td>
                                     <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td class="text-end">
