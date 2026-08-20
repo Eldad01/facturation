@@ -108,6 +108,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/inventaires', [InventaireController::class, 'store'])->name('inventaires.store');
     Route::get('/inventaires/{inventaire}', [InventaireController::class, 'show'])->name('inventaires.show');
     Route::put('/inventaires/{inventaire}', [InventaireController::class, 'update'])->name('inventaires.update');
+    Route::get('/inventaires/{inventaire}/pdf', [PdfController::class, 'generateInventaire'])->name('inventaires.pdf');
 
     Route::middleware('role:admin')->group(function () {
         Route::post('/inventaires/{inventaire}/valider', [InventaireController::class, 'valider'])

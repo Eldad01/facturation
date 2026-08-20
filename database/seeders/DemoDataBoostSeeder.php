@@ -6,6 +6,8 @@ use App\Models\Client;
 use App\Models\CommandeAchat;
 use App\Models\Facture;
 use App\Models\Fournisseur;
+use App\Models\Inventaire;
+use App\Models\InventaireLigne;
 use App\Models\LigneCommandeAchat;
 use App\Models\LigneFacture;
 use App\Models\LignePaiement;
@@ -37,7 +39,104 @@ class DemoDataBoostSeeder extends Seeder
 
             $this->pousserStockBasExistant();
             $this->pousserRetardExistant();
+            $this->seedInventaires($users);
         });
+    }
+
+    /**
+     * Crée quelques sessions d'inventaire (une validée avec écarts, une en brouillon)
+     * pour illustrer la fiche d'inventaire imprimable et les écarts valorisés.
+     */
+    private function seedInventaires(array $users): void
+    {
+        $admin = $users['admin'] ?? User::where('role', 'admin')->first();
+        $employe = $users['employe1'] ?? User::where('role', 'employe')->first();
+
+        // --- Inventaire validé, avec des écarts (positifs et négatifs) ---
+        $dateOuverture = fake()->dateTimeBetween('-3 weeks', '-1 week');
+        $inventaireValide = Inventaire::create([
+            'reference' => 'INV-' . $dateOuverture->format('YmdHis'),
+            'statut' => 'brouillon',
+            'user_id_creation' => $employe?->id ?? $admin?->id,
+            'notes' => 'Comptage mensuel du dépôt principal.',
+        ]);
+        $inventaireValide->created_at = $dateOuverture;
+        $inventaireValide->updated_at = $dateOuverture;
+        $inventaireValide->save();
+
+        $produitsInventaire = Produit::inRandomOrder()->limit(20)->get();
+        foreach ($produitsInventaire as $index => $produit) {
+            // La majorité des lignes collent au théorique, quelques écarts volontaires
+            $ecart = match (true) {
+                $index % 7 === 0 => -fake()->numberBetween(1, 5),
+                $index % 5 === 0 => fake()->numberBetween(1, 4),
+                default => 0,
+            };
+
+            InventaireLigne::create([
+                'inventaire_id' => $inventaireValide->id,
+                'produit_id' => $produit->id,
+                'stock_theorique' => $produit->stock,
+                'stock_reel' => max(0, $produit->stock + $ecart),
+            ]);
+        }
+
+        $dateValidation = (clone $dateOuverture)->modify('+' . fake()->numberBetween(1, 3) . ' days');
+
+        DB::transaction(function () use ($inventaireValide, $dateValidation) {
+            foreach ($inventaireValide->lignes as $ligne) {
+                $produit = Produit::where('id', $ligne->produit_id)->lockForUpdate()->first();
+                if (!$produit) {
+                    continue;
+                }
+
+                $diff = $ligne->stock_reel - $produit->stock;
+                if ($diff !== 0) {
+                    MouvementStock::create([
+                        'produit_id' => $produit->id,
+                        'type' => $diff > 0 ? 'entree' : 'sortie',
+                        'quantite' => abs($diff),
+                        'raison' => "Inventaire {$inventaireValide->reference}",
+                    ]);
+                }
+
+                $produit->update([
+                    'dernier_stock_reel' => $ligne->stock_reel,
+                    'date_dernier_inventaire' => $dateValidation,
+                ]);
+            }
+        });
+
+        $inventaireValide->statut = 'validee';
+        $inventaireValide->user_id_validation = $admin?->id;
+        $inventaireValide->date_validation = $dateValidation;
+        $inventaireValide->timestamps = false;
+        $inventaireValide->updated_at = $dateValidation;
+        $inventaireValide->save();
+        $inventaireValide->timestamps = true;
+
+        // --- Inventaire en brouillon, comptage partiellement saisi ---
+        $dateOuverture2 = fake()->dateTimeBetween('-2 days', 'now');
+        $inventaireBrouillon = Inventaire::create([
+            'reference' => 'INV-' . $dateOuverture2->format('YmdHis'),
+            'statut' => 'brouillon',
+            'user_id_creation' => $employe?->id ?? $admin?->id,
+        ]);
+        $inventaireBrouillon->created_at = $dateOuverture2;
+        $inventaireBrouillon->updated_at = $dateOuverture2;
+        $inventaireBrouillon->save();
+
+        $produitsBrouillon = Produit::inRandomOrder()->limit(15)->get();
+        foreach ($produitsBrouillon as $index => $produit) {
+            $compte = $index < 9; // les 9 premiers déjà comptés, le reste en attente
+
+            InventaireLigne::create([
+                'inventaire_id' => $inventaireBrouillon->id,
+                'produit_id' => $produit->id,
+                'stock_theorique' => $produit->stock,
+                'stock_reel' => $compte ? max(0, $produit->stock + fake()->numberBetween(-2, 2)) : null,
+            ]);
+        }
     }
 
     private function seedMoreClients(): \Illuminate\Support\Collection

@@ -15,9 +15,14 @@
             @endif
         </p>
     </div>
-    <a href="{{ route('inventaires.index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Retour
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{{ route('inventaires.pdf', $inventaire->id) }}" class="btn btn-outline-primary btn-sm" target="_blank">
+            <i class="bi bi-printer me-1"></i> Imprimer / Exporter
+        </a>
+        <a href="{{ route('inventaires.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Retour
+        </a>
+    </div>
 </div>
 
 {{-- Info Card --}}
@@ -74,10 +79,13 @@
                             <th class="text-center d-none d-sm-table-cell" style="width:120px;">Stock théo.</th>
                             <th class="text-center" style="width:140px;">Stock réel</th>
                             <th class="text-center" style="width:100px;">Écart</th>
+                            <th class="text-end d-none d-md-table-cell" style="width:150px;">Écart valorisé</th>
                         </tr>
                     </thead>
                     <tbody>
+                        @php $totalEcartValorise = 0; @endphp
                         @foreach($inventaire->lignes as $ligne)
+                            @php $totalEcartValorise += $ligne->ecart_valorise ?? 0; @endphp
                             <tr>
                                 <td class="align-middle">
                                     {{ $ligne->produit->nom ?? '—' }}
@@ -104,9 +112,28 @@
                                         <span class="badge bg-danger-subtle text-danger">{{ $ligne->ecart }}</span>
                                     @endif
                                 </td>
+                                <td class="text-end align-middle d-none d-md-table-cell">
+                                    @if($ligne->ecart_valorise === null)
+                                        <span class="text-muted">—</span>
+                                    @else
+                                        <span class="{{ $ligne->ecart_valorise < 0 ? 'text-danger' : ($ligne->ecart_valorise > 0 ? 'text-primary' : 'text-muted') }}">
+                                            {{ $ligne->ecart_valorise > 0 ? '+' : '' }}{{ number_format($ligne->ecart_valorise, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}
+                                        </span>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr class="table-light d-none d-md-table-row">
+                            <th colspan="4" class="text-end">Total écart valorisé</th>
+                            <th class="text-end">
+                                <span class="{{ $totalEcartValorise < 0 ? 'text-danger' : ($totalEcartValorise > 0 ? 'text-primary' : 'text-muted') }}">
+                                    {{ $totalEcartValorise > 0 ? '+' : '' }}{{ number_format($totalEcartValorise, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}
+                                </span>
+                            </th>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
 

@@ -71,6 +71,15 @@
                     </div>
                 </div>
 
+                @if($facture->objet)
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-2"><i class="bi bi-card-text me-1"></i>Objet</h6>
+                            <p class="mb-0">{{ $facture->objet }}</p>
+                        </div>
+                    </div>
+                @endif
+
                 <hr class="my-4">
 
                 {{-- Lines Table --}}

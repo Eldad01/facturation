@@ -28,88 +28,56 @@
             margin: -28px -34px 22px -34px;
         }
 
-        /* ---------- En-tête ---------- */
-        .header {
+        /* ---------- En-tête (entreprise, centrée) ---------- */
+        .doc-header {
             width: 100%;
-            display: table;
-            margin-bottom: 18px;
-        }
-
-        .header > div {
-            display: table-cell;
-            vertical-align: top;
-        }
-
-        .company {
-            width: 55%;
-        }
-
-        .company .name {
-            font-size: 16px;
-            font-weight: bold;
-            color: {{ $accent }};
-            margin-bottom: 4px;
-        }
-
-        .company .meta {
-            font-size: 10px;
-            color: #495057;
-            line-height: 1.5;
-        }
-
-        .logo-cell {
-            width: 15%;
             text-align: center;
+            margin-bottom: 10px;
         }
 
-        .logo-cell img {
-            max-height: 70px;
-            max-width: 110px;
-        }
-
-        .doc-meta {
-            width: 30%;
-            text-align: right;
-        }
-
-        .doc-meta .doc-title {
-            display: inline-block;
-            font-size: 15px;
-            font-weight: bold;
-            color: #fff;
-            background: {{ $accent }};
-            padding: 5px 14px;
-            border-radius: 3px;
-            letter-spacing: 1px;
+        .doc-header .logo {
+            max-height: 75px;
+            max-width: 160px;
             margin-bottom: 8px;
         }
 
-        .doc-meta table {
-            width: 100%;
-            border: none;
-            margin-top: 4px;
-        }
-
-        .doc-meta table td {
-            border: none;
-            padding: 1px 0;
-            font-size: 10px;
-            text-align: right;
-        }
-
-        .doc-meta table td.label {
-            color: #6c757d;
-            padding-right: 8px;
-        }
-
-        .doc-meta table td.value {
+        .doc-header .name {
+            font-size: 24px;
             font-weight: bold;
-            white-space: nowrap;
+            color: {{ $accent }};
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .doc-header .meta {
+            font-size: 10px;
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        /* ---------- Bandeau titre du document ---------- */
+        .doc-title-bar {
+            text-align: center;
+            background: {{ $accent }};
+            color: #fff;
+            font-size: 17px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            padding: 9px 10px;
+            border-radius: 3px;
+            margin: 14px 0 8px;
+        }
+
+        .doc-sub-meta {
+            text-align: center;
+            font-size: 10px;
+            color: #495057;
+            margin-bottom: 20px;
         }
 
         .status-badge {
             display: inline-block;
-            margin-top: 6px;
+            margin-left: 8px;
             padding: 3px 10px;
             border-radius: 3px;
             font-size: 9px;
@@ -131,7 +99,7 @@
             border-left: 3px solid {{ $accent }};
             border-radius: 2px;
             padding: 10px 14px;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
 
         .client-box .label {
@@ -152,6 +120,22 @@
             font-size: 10px;
             color: #495057;
             line-height: 1.5;
+        }
+
+        /* ---------- Objet ---------- */
+        .objet-line {
+            font-size: 10.5px;
+            color: #212529;
+            margin: 0 0 16px;
+        }
+
+        .objet-line .label {
+            font-weight: bold;
+            color: #495057;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.5px;
+            margin-right: 6px;
         }
 
         /* ---------- Table des lignes ---------- */
@@ -322,67 +306,51 @@
 
 <div class="accent-bar"></div>
 
-{{-- ================= EN-TÊTE ================= --}}
-<div class="header">
-    <div class="company">
-        <div class="name">{{ $settings?->company_name ?? 'Votre entreprise' }}</div>
-        <div class="meta">
-            @if($settings?->address){{ $settings->address }}<br>@endif
-            @if($settings?->boite_postale)BP : {{ $settings->boite_postale }}<br>@endif
-            @if($settings?->phone)Tél : {{ $settings->phone }}<br>@endif
-            @if($settings?->email){{ $settings->email }}<br>@endif
-            @if($settings?->ifu)IFU : {{ $settings->ifu }}&nbsp;&nbsp;@endif
-            @if($settings?->rccm)RCCM : {{ $settings->rccm }}<br>@endif
-            @if($settings?->regime_imposition)Régime : {{ $settings->regime_imposition }}<br>@endif
-            @if($settings?->contact_nom)Contact : {{ $settings->contact_nom }}@if($settings?->contact_telephone) ({{ $settings->contact_telephone }})@endif @endif
-        </div>
+{{-- ================= EN-TÊTE (entreprise, centrée) ================= --}}
+<div class="doc-header">
+    @if($settings?->logo)
+        <img class="logo" src="{{ public_path('logos/'.$settings->logo) }}">
+    @endif
+    <div class="name">{{ $settings?->company_name ?? 'Votre entreprise' }}</div>
+    <div class="meta">
+        @if($settings?->address){{ $settings->address }}<br>@endif
+        @if($settings?->boite_postale)BP : {{ $settings->boite_postale }}&nbsp;&nbsp;@endif
+        @if($settings?->phone)Tél : {{ $settings->phone }}<br>@endif
+        @if($settings?->email){{ $settings->email }}<br>@endif
+        @if($settings?->ifu)IFU : {{ $settings->ifu }}&nbsp;&nbsp;@endif
+        @if($settings?->rccm)RCCM : {{ $settings->rccm }}<br>@endif
+        @if($settings?->regime_imposition)Régime : {{ $settings->regime_imposition }}<br>@endif
+        @if($settings?->contact_nom)Contact : {{ $settings->contact_nom }}@if($settings?->contact_telephone) ({{ $settings->contact_telephone }})@endif @endif
     </div>
+</div>
 
-    <div class="logo-cell">
-        @if($settings?->logo)
-            <img src="{{ public_path('logos/'.$settings->logo) }}">
+{{-- ================= TITRE DU DOCUMENT ================= --}}
+<div class="doc-title-bar">{{ $titre }} N° {{ $facture->numero_facture }}</div>
+
+<div class="doc-sub-meta">
+    Date : {{ $facture->created_at->format('d/m/Y') }}
+    @if($facture->type_document === 'recu' && $facture->date_echeance)
+        &nbsp;&nbsp;|&nbsp;&nbsp;Échéance : {{ $facture->date_echeance->format('d/m/Y') }}
+    @endif
+    @if($facture->type_document === 'recu')
+        @php
+            $statusClass = match($facture->etat) {
+                'annulee' => 'status-annule',
+                'payee' => 'status-payee',
+                'partiellement_payee' => 'status-partielle',
+                default => 'status-impayee',
+            };
+        @endphp
+        <span class="status-badge {{ $statusClass }}">{{ $facture->etat_label }}</span>
+        @if($facture->isOverdue())
+            <span class="status-badge status-retard">En retard</span>
         @endif
-    </div>
-
-    <div class="doc-meta">
-        <div class="doc-title">{{ $titre }}</div>
-        <table>
-            <tr>
-                <td class="label">N°</td>
-                <td class="value">{{ $facture->numero_facture }}</td>
-            </tr>
-            <tr>
-                <td class="label">Date</td>
-                <td class="value">{{ $facture->created_at->format('d/m/Y') }}</td>
-            </tr>
-            @if($facture->date_echeance)
-                <tr>
-                    <td class="label">Échéance</td>
-                    <td class="value">{{ $facture->date_echeance->format('d/m/Y') }}</td>
-                </tr>
-            @endif
-        </table>
-
-        @if($facture->type_document === 'recu')
-            @php
-                $statusClass = match($facture->etat) {
-                    'annulee' => 'status-annule',
-                    'payee' => 'status-payee',
-                    'partiellement_payee' => 'status-partielle',
-                    default => 'status-impayee',
-                };
-            @endphp
-            <span class="status-badge {{ $statusClass }}">{{ $facture->etat_label }}</span>
-            @if($facture->isOverdue())
-                <span class="status-badge status-retard">En retard</span>
-            @endif
-        @endif
-    </div>
+    @endif
 </div>
 
 {{-- ================= CLIENT ================= --}}
 <div class="client-box">
-    <div class="label">Facturé à</div>
+    <div class="label">Doit :</div>
     <div class="name">{{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '' }}</div>
     <div class="meta">
         @if($facture->client?->telephone){{ $facture->client->telephone }}<br>@endif
@@ -397,6 +365,11 @@
         @endif
     </div>
 </div>
+
+{{-- ================= OBJET ================= --}}
+@if($facture->objet)
+    <div class="objet-line"><span class="label">Objet :</span>{{ $facture->objet }}</div>
+@endif
 
 {{-- ================= LIGNES ================= --}}
 @php

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Facture;
+use App\Models\Inventaire;
 use App\Models\Setting;
 use PDF;
 
@@ -19,7 +20,7 @@ class PdfController extends Controller
         $settings = Setting::first();
 
         $titre = $facture->type_document === 'recu'
-            ? 'REÇU'
+            ? 'FACTURE'
             : 'PRO-FORMA';
 
         $pdf = PDF::loadView('pdf.facture', [
@@ -29,5 +30,23 @@ class PdfController extends Controller
         ]);
 
         return $pdf->stream($titre . '-' . $facture->numero_facture . '.pdf');
+    }
+
+    public function generateInventaire(Inventaire $inventaire)
+    {
+        $inventaire->load([
+            'lignes.produit',
+            'userCreation',
+            'userValidation',
+        ]);
+
+        $settings = Setting::first();
+
+        $pdf = PDF::loadView('pdf.inventaire', [
+            'inventaire' => $inventaire,
+            'settings'   => $settings,
+        ]);
+
+        return $pdf->stream('INVENTAIRE-' . $inventaire->reference . '.pdf');
     }
 }

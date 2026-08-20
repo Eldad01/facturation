@@ -16,6 +16,7 @@ class Facture extends Model
         'type_document',   // pro-forma | recu
         'status',
         'numero_facture',
+        'objet',
         'total',
         'montant_paye',
         'date_echeance',

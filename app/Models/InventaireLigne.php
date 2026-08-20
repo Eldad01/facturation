@@ -29,4 +29,16 @@ class InventaireLigne extends Model
     {
         return $this->stock_reel === null ? null : $this->stock_reel - $this->stock_theorique;
     }
+
+    /**
+     * Valeur monétaire de l'écart : écart (quantité) x CUMP d'achat du produit.
+     */
+    public function getEcartValoriseAttribute()
+    {
+        if ($this->ecart === null) {
+            return null;
+        }
+
+        return $this->ecart * ($this->produit->prix_achat ?? 0);
+    }
 }

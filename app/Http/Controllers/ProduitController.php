@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\Produit;
@@ -218,20 +219,41 @@ class ProduitController extends Controller
             $request->validate([
                 'quantite' => 'required|integer|min:1',
                 'raison' => 'nullable|string|max:255',
+                'prix_achat_unitaire' => 'required|integer|min:0',
             ]);
 
-            // Création du mouvement d'entrée
-            MouvementStock::create([
-                'produit_id' => $produit->id,
-                'type' => 'entree',
-                'quantite' => $request->quantite,
-                'raison' => $request->raison ?? 'Réapprovisionnement',
-            ]);
+            $nouveauCump = DB::transaction(function () use ($request, $produit) {
+                $produitLocked = Produit::where('id', $produit->id)->lockForUpdate()->first();
+
+                $stockAvant = $produitLocked->stock;
+                $ancienCump = $produitLocked->prix_achat ?? 0;
+                $quantite = (int) $request->quantite;
+                $prixUnitaire = (int) $request->prix_achat_unitaire;
+
+                // Création du mouvement d'entrée (incrémente automatiquement produit.stock)
+                MouvementStock::create([
+                    'produit_id' => $produitLocked->id,
+                    'type' => 'entree',
+                    'quantite' => $quantite,
+                    'raison' => $request->raison ?? 'Réapprovisionnement',
+                    'prix_unitaire' => $prixUnitaire,
+                ]);
+
+                // Coût Unitaire Moyen Pondéré (CUMP) : intègre le nouveau lot au stock existant
+                $diviseur = $stockAvant + $quantite;
+                $nouveauCump = $diviseur > 0
+                    ? (int) round((($stockAvant * $ancienCump) + ($quantite * $prixUnitaire)) / $diviseur)
+                    : $prixUnitaire;
+
+                $produitLocked->update(['prix_achat' => $nouveauCump]);
+
+                return $nouveauCump;
+            });
 
             // Enregistrer l'activité
             ActivityLogger::stockUpdate(
                 $produit,
-                "Réapprovisionnement du produit {$produit->nom} - Quantité: {$request->quantite}",
+                "Réapprovisionnement du produit {$produit->nom} - Quantité: {$request->quantite} - Coût unitaire: {$request->prix_achat_unitaire} - Nouveau CUMP: {$nouveauCump}",
                 $request->quantite
             );
 

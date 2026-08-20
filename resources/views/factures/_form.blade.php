@@ -31,6 +31,7 @@
             @enderror
         </div>
 
+        @if($typeDocument === 'recu')
         <div class="col-12 col-md-6">
             <label for="date_echeance" class="form-label">Date d'échéance</label>
             <input type="date"
@@ -39,6 +40,23 @@
                    class="form-control @error('date_echeance') is-invalid @enderror"
                    value="{{ old('date_echeance', $facture?->date_echeance?->format('Y-m-d')) }}">
             @error('date_echeance')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+        @endif
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12">
+            <label for="objet" class="form-label">Objet</label>
+            <input type="text"
+                   name="objet"
+                   id="objet"
+                   maxlength="500"
+                   class="form-control @error('objet') is-invalid @enderror"
+                   placeholder="Ex : Vente de fournitures diverses"
+                   value="{{ old('objet', $facture?->objet) }}">
+            @error('objet')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
