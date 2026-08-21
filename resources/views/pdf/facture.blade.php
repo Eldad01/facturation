@@ -28,25 +28,52 @@
             margin: -28px -34px 22px -34px;
         }
 
-        /* ---------- En-tête (entreprise, centrée) ---------- */
+        /* ---------- En-tête (logo + entreprise à gauche, document à droite) ---------- */
         .doc-header {
             width: 100%;
-            text-align: center;
-            margin-bottom: 10px;
+            display: table;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f1f3f5;
         }
 
-        .doc-header .logo {
-            max-height: 75px;
-            max-width: 160px;
+        .doc-header > div {
+            display: table-cell;
+            vertical-align: top;
+        }
+
+        .header-left {
+            width: 62%;
+        }
+
+        .brand-row {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 8px;
         }
 
-        .doc-header .name {
-            font-size: 24px;
+        .brand-row td {
+            border: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .brand-row .logo-cell {
+            width: 1%;
+            white-space: nowrap;
+            padding-right: 14px;
+        }
+
+        .brand-row .logo-cell img {
+            max-height: 64px;
+            max-width: 140px;
+        }
+
+        .brand-row .name-cell {
+            font-size: 21px;
             font-weight: bold;
             color: {{ $accent }};
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            letter-spacing: 0.3px;
         }
 
         .doc-header .meta {
@@ -55,42 +82,44 @@
             line-height: 1.6;
         }
 
-        /* ---------- Bandeau titre du document ---------- */
-        .doc-title-bar {
-            text-align: center;
-            background: {{ $accent }};
-            color: #fff;
-            font-size: 17px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            padding: 9px 10px;
-            border-radius: 3px;
-            margin: 14px 0 8px;
+        .header-right {
+            width: 38%;
+            text-align: right;
         }
 
-        .doc-sub-meta {
-            text-align: center;
-            font-size: 10px;
-            color: #495057;
-            margin-bottom: 20px;
-        }
-
-        .status-badge {
+        .doc-title-badge {
             display: inline-block;
-            margin-left: 8px;
-            padding: 3px 10px;
-            border-radius: 3px;
-            font-size: 9px;
+            font-size: 15px;
             font-weight: bold;
-            letter-spacing: 0.5px;
             color: #fff;
+            background: {{ $accent }};
+            padding: 6px 16px;
+            border-radius: 3px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
-        .status-payee { background: #198754; }
-        .status-partielle { background: #fd7e14; }
-        .status-impayee { background: #6c757d; }
-        .status-retard { background: #dc3545; }
-        .status-annule { background: #6c757d; }
+        .doc-meta-table {
+            width: 100%;
+            border: none;
+        }
+
+        .doc-meta-table td {
+            border: none;
+            padding: 2px 0;
+            font-size: 10px;
+            text-align: right;
+        }
+
+        .doc-meta-table td.label {
+            color: #6c757d;
+            padding-right: 8px;
+        }
+
+        .doc-meta-table td.value {
+            font-weight: bold;
+            white-space: nowrap;
+        }
 
         /* ---------- Bloc client ---------- */
         .client-box {
@@ -306,46 +335,46 @@
 
 <div class="accent-bar"></div>
 
-{{-- ================= EN-TÊTE (entreprise, centrée) ================= --}}
+{{-- ================= EN-TÊTE (logo + entreprise / document) ================= --}}
 <div class="doc-header">
-    @if($settings?->logo)
-        <img class="logo" src="{{ public_path('logos/'.$settings->logo) }}">
-    @endif
-    <div class="name">{{ $settings?->company_name ?? 'Votre entreprise' }}</div>
-    <div class="meta">
-        @if($settings?->address){{ $settings->address }}<br>@endif
-        @if($settings?->boite_postale)BP : {{ $settings->boite_postale }}&nbsp;&nbsp;@endif
-        @if($settings?->phone)Tél : {{ $settings->phone }}<br>@endif
-        @if($settings?->email){{ $settings->email }}<br>@endif
-        @if($settings?->ifu)IFU : {{ $settings->ifu }}&nbsp;&nbsp;@endif
-        @if($settings?->rccm)RCCM : {{ $settings->rccm }}<br>@endif
-        @if($settings?->regime_imposition)Régime : {{ $settings->regime_imposition }}<br>@endif
-        @if($settings?->contact_nom)Contact : {{ $settings->contact_nom }}@if($settings?->contact_telephone) ({{ $settings->contact_telephone }})@endif @endif
+    <div class="header-left">
+        <table class="brand-row">
+            <tr>
+                @if($settings?->logo)
+                    <td class="logo-cell">
+                        <img src="{{ public_path('logos/'.$settings->logo) }}">
+                    </td>
+                @endif
+                <td class="name-cell">{{ $settings?->company_name ?? 'Votre entreprise' }}</td>
+            </tr>
+        </table>
+        <div class="meta">
+            @if($settings?->address){{ $settings->address }}<br>@endif
+            @if($settings?->boite_postale)BP : {{ $settings->boite_postale }}&nbsp;&nbsp;@endif
+            @if($settings?->phone)Tél : {{ $settings->phone }}<br>@endif
+            @if($settings?->email){{ $settings->email }}<br>@endif
+            @if($settings?->ifu)IFU : {{ $settings->ifu }}&nbsp;&nbsp;@endif
+            @if($settings?->rccm)RCCM : {{ $settings->rccm }}<br>@endif
+            @if($settings?->regime_imposition)Régime : {{ $settings->regime_imposition }}<br>@endif
+            @if($settings?->contact_nom)Contact : {{ $settings->contact_nom }}@if($settings?->contact_telephone) ({{ $settings->contact_telephone }})@endif @endif
+        </div>
     </div>
-</div>
 
-{{-- ================= TITRE DU DOCUMENT ================= --}}
-<div class="doc-title-bar">{{ $titre }} N° {{ $facture->numero_facture }}</div>
-
-<div class="doc-sub-meta">
-    Date : {{ $facture->created_at->format('d/m/Y') }}
-    @if($facture->type_document === 'recu' && $facture->date_echeance)
-        &nbsp;&nbsp;|&nbsp;&nbsp;Échéance : {{ $facture->date_echeance->format('d/m/Y') }}
-    @endif
-    @if($facture->type_document === 'recu')
-        @php
-            $statusClass = match($facture->etat) {
-                'annulee' => 'status-annule',
-                'payee' => 'status-payee',
-                'partiellement_payee' => 'status-partielle',
-                default => 'status-impayee',
-            };
-        @endphp
-        <span class="status-badge {{ $statusClass }}">{{ $facture->etat_label }}</span>
-        @if($facture->isOverdue())
-            <span class="status-badge status-retard">En retard</span>
-        @endif
-    @endif
+    <div class="header-right">
+        <div class="doc-title-badge">{{ $titre }} N° {{ $facture->numero_facture }}</div>
+        <table class="doc-meta-table">
+            <tr>
+                <td class="label">Date</td>
+                <td class="value">{{ $facture->created_at->format('d/m/Y') }}</td>
+            </tr>
+            @if($facture->type_document === 'recu' && $facture->date_echeance)
+                <tr>
+                    <td class="label">Échéance</td>
+                    <td class="value">{{ $facture->date_echeance->format('d/m/Y') }}</td>
+                </tr>
+            @endif
+        </table>
+    </div>
 </div>
 
 {{-- ================= CLIENT ================= --}}
@@ -444,19 +473,27 @@
                 <td class="label">TVA ({{ $tvaRate }}%)</td>
                 <td class="value">{{ number_format($tvaAmount, 0, ',', ' ') }} {{ $devise }}</td>
             </tr>
+            @if($facture->type_document === 'recu' && ($facture->avance ?? 0) > 0)
+                <tr>
+                    <td class="label">Avance</td>
+                    <td class="value">- {{ number_format($facture->avance, 0, ',', ' ') }} {{ $devise }}</td>
+                </tr>
+            @endif
             <tr class="ttc">
                 <td class="label">Total TTC</td>
                 <td class="value">{{ number_format($totalTtc, 0, ',', ' ') }} {{ $devise }}</td>
             </tr>
-            @if($facture->type_document === 'recu')
+            @if($facture->type_document === 'recu' && $facture->montant_paye > 0)
                 <tr>
                     <td class="label">Montant payé</td>
-                    <td class="value">{{ number_format($facture->montant_paye, 0, ',', ' ') }} {{ $devise }}</td>
+                    <td class="value">- {{ number_format($facture->montant_paye, 0, ',', ' ') }} {{ $devise }}</td>
                 </tr>
-                @if($facture->balance > 0)
+            @endif
+            @if($facture->type_document === 'recu' && (($facture->avance ?? 0) > 0 || $facture->montant_paye > 0))
+                @if($facture->net_a_payer > 0)
                     <tr class="balance">
-                        <td class="label">Solde restant</td>
-                        <td class="value">{{ number_format($facture->balance, 0, ',', ' ') }} {{ $devise }}</td>
+                        <td class="label">Reste à payer</td>
+                        <td class="value">{{ number_format($facture->net_a_payer, 0, ',', ' ') }} {{ $devise }}</td>
                     </tr>
                 @else
                     <tr class="paid">

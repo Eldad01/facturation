@@ -19,6 +19,7 @@ class Facture extends Model
         'objet',
         'total',
         'montant_paye',
+        'avance',
         'date_echeance',
         'date_paiement',
         'modifiable',
@@ -54,6 +55,15 @@ class Facture extends Model
     public function getBalanceAttribute()
     {
         return max(0, $this->total - $this->montant_paye);
+    }
+
+    /**
+     * Net à payer affiché sur la facture imprimée : Total TTC diminué de l'avance
+     * (versée avant livraison/impression) et des paiements formellement enregistrés.
+     */
+    public function getNetAPayerAttribute()
+    {
+        return max(0, $this->total - ($this->avance ?? 0) - $this->montant_paye);
     }
 
     public function isPaid(): bool

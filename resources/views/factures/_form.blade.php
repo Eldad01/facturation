@@ -71,6 +71,23 @@
             <label for="tva" class="form-label">TVA (%)</label>
             <input type="number" step="0.01" name="tva" id="tva" class="form-control" value="{{ old('tva', $facture?->tva ?? ($app_settings?->tva_default ?? 0)) }}">
         </div>
+        @if($typeDocument === 'recu')
+        <div class="col-12 col-md-6">
+            <label for="avance" class="form-label">Avance <span class="text-muted">(optionnel)</span></label>
+            <input type="number"
+                   step="1"
+                   min="0"
+                   name="avance"
+                   id="avance"
+                   class="form-control @error('avance') is-invalid @enderror"
+                   placeholder="Laisser vide si aucune avance"
+                   value="{{ old('avance', $facture?->avance) }}">
+            <div class="form-text">Montant déjà versé par le client avant la livraison ou l'impression de la facture.</div>
+            @error('avance')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
+        </div>
+        @endif
     </div>
 
     <hr class="my-4">

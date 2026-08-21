@@ -1246,6 +1246,38 @@
         });
     </script>
 
+    <!-- Recherche automatique au fur et à mesure de la saisie (toutes les barres de recherche) -->
+    <script>
+        $(document).ready(function () {
+            var searchTimer = null;
+
+            $('input[name="search"]').each(function () {
+                var $search = $(this);
+                var $form = $search.closest('form');
+                if ($form.length === 0) return;
+
+                $search.on('input', function () {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(function () {
+                        $form.trigger('submit');
+                    }, 500);
+                });
+            });
+
+            // Rendre le focus (et la position du curseur) au champ de recherche après
+            // le rechargement déclenché automatiquement par la saisie.
+            var params = new URLSearchParams(window.location.search);
+            if (params.has('search')) {
+                var $activeSearch = $('input[name="search"]:visible').first();
+                if ($activeSearch.length) {
+                    var val = $activeSearch.val();
+                    $activeSearch.trigger('focus');
+                    $activeSearch[0].setSelectionRange(val.length, val.length);
+                }
+            }
+        });
+    </script>
+
     @stack('scripts')
 
 </body>

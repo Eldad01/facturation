@@ -25,9 +25,23 @@ class FactureController extends Controller
 
         $searchScope = function ($query) use ($search) {
             $query->when($search, function ($q, $search) {
-                $q->whereHas('client', fn($qc) =>
-                    $qc->where('nom', 'like', "%$search%")
-                )->orWhere('numero_facture', 'like', "%$search%");
+                // Regroupé dans un where() : sans ça, orWhere() casse les filtres
+                // (type_document, status...) déjà appliqués sur la requête principale.
+                $q->where(function ($qq) use ($search) {
+                    // Nom et prénom sont deux colonnes séparées : on découpe la recherche en mots
+                    // pour que "GALLET Émile" (ou "Émile GALLET") trouve un client dont chaque mot
+                    // correspond à nom OU prénom, peu importe l'ordre de saisie.
+                    $mots = preg_split('/\s+/', trim($search), -1, PREG_SPLIT_NO_EMPTY);
+
+                    $qq->whereHas('client', function ($qc) use ($mots) {
+                        foreach ($mots as $mot) {
+                            $qc->where(function ($w) use ($mot) {
+                                $w->where('nom', 'like', "%$mot%")
+                                  ->orWhere('prenom', 'like', "%$mot%");
+                            });
+                        }
+                    })->orWhere('numero_facture', 'like', "%$search%");
+                });
             });
         };
 
@@ -56,6 +70,22 @@ class FactureController extends Controller
             ->paginate(10, ['*'], 'recu_page')
             ->withQueryString();
 
+        // Chaque onglet a sa propre barre de recherche, mais un numéro/client peut
+        // se trouver dans un autre onglet que celui actif : on bascule automatiquement
+        // vers le premier onglet qui contient un résultat plutôt que de sembler "ne rien trouver".
+        if ($search) {
+            $resultatsParOnglet = ['devis' => $devis->total(), 'attente' => $enAttente->total(), 'recus' => $recus->total()];
+
+            if (($resultatsParOnglet[$tab] ?? 0) === 0) {
+                foreach ($resultatsParOnglet as $ongletCandidat => $total) {
+                    if ($total > 0) {
+                        $tab = $ongletCandidat;
+                        break;
+                    }
+                }
+            }
+        }
+
         return view('factures.index', compact('devis', 'enAttente', 'recus', 'tab'));
     }
 
@@ -83,6 +113,7 @@ class FactureController extends Controller
             'status' => 'nullable|in:pro-forma,recu',
             'date_echeance' => 'nullable|date|after_or_equal:today',
             'objet' => 'nullable|string|max:500',
+            'avance' => 'nullable|numeric|min:0',
             'tva' => 'nullable|numeric|min:0|max:100',
             'remise' => 'nullable|numeric|min:0',
             'lignes' => 'required|array|min:1',
@@ -130,6 +161,7 @@ class FactureController extends Controller
                     'status' => $status,
                     'date_echeance' => $request->date_echeance,
                     'objet' => $request->objet,
+                    'avance' => $request->type_document === 'recu' ? ($request->avance ?: null) : null,
                     'numero_facture' => Facture::generateNumeroFor($request->type_document),
                     'total' => 0,
                     'montant_paye' => 0,

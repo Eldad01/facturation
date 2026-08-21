@@ -340,6 +340,12 @@ class DemoDataSeeder extends Seeder
 
             $this->creerLignesFacture($facture, $produits, 'recu', $date);
 
+            // Avance versée par le client avant livraison/impression (facultative, indépendante des paiements formels)
+            if (fake()->boolean(35)) {
+                $facture->refresh();
+                $facture->update(['avance' => (int) round($facture->total * fake()->randomFloat(2, 0.15, 0.4))]);
+            }
+
             if ($etat === 'payee') {
                 $this->payerLignesFacture($facture, $facture->lignes->pluck('quantite', 'id')->toArray(), $date);
             } elseif ($etat === 'partiellement_payee') {

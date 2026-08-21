@@ -13,8 +13,22 @@ class ClientController extends Controller
         $query = Client::query();
 
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('telephone', 'like', "%{$search}%");
+            $search = trim($request->search);
+
+            $query->where(function ($q) use ($search) {
+                // Nom et prénom sont deux colonnes séparées : on découpe la recherche en mots
+                // pour que "GALLET Émile" (ou "Émile GALLET") trouve le client quel que soit l'ordre.
+                $mots = preg_split('/\s+/', $search, -1, PREG_SPLIT_NO_EMPTY);
+
+                $q->where(function ($qc) use ($mots) {
+                    foreach ($mots as $mot) {
+                        $qc->where(function ($w) use ($mot) {
+                            $w->where('nom', 'like', "%$mot%")
+                              ->orWhere('prenom', 'like', "%$mot%");
+                        });
+                    }
+                })->orWhere('telephone', 'like', "%{$search}%");
+            });
         }
 
         $clients = $query->orderBy('nom')->orderBy('prenom')->paginate(10);

@@ -23,10 +23,10 @@
                     <span class="input-group-text bg-white">
                         <i class="bi bi-search"></i>
                     </span>
-                    <input type="text" 
-                           name="search" 
-                           class="form-control" 
-                           placeholder="Rechercher par numero de telephone..."
+                    <input type="text"
+                           name="search"
+                           class="form-control"
+                           placeholder="Rechercher par nom, prenom ou telephone..."
                            value="{{ request('search') }}">
                 </div>
             </div>
@@ -109,7 +109,7 @@
                                 <div class="empty-state">
                                     <i class="bi bi-people"></i>
                                     <h5>Aucun client trouve</h5>
-                                    <p class="text-muted">Recherchez par son numero de telephone.</p>
+                                    <p class="text-muted">Recherchez par nom, prenom ou numero de telephone.</p>
                                 </div>
                             </td>
                         </tr>
