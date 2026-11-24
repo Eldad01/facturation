@@ -119,7 +119,7 @@
                         <tr>
                             <td class="fw-semibold">{{ $produit->nom }}</td>
                             <td class="text-end text-danger fw-bold">{{ $produit->stock }}</td>
-                            <td class="text-end d-none d-md-table-cell">{{ $produit->dernier_stock_reel ?? '—' }}</td>
+                            <td class="text-end d-none d-md-table-cell">{{ $produit->dernier_stock_reel ?? '-' }}</td>
                             <td class="text-end">
                                 <a href="{{ route('produits.show', $produit->id) }}" class="btn btn-sm btn-outline-danger">
                                     <i class="bi bi-eye"></i>

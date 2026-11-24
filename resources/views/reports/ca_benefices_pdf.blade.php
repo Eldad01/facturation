@@ -17,7 +17,7 @@
 </head>
 <body>
     <h1>Chiffre d'affaires &amp; bénéfices</h1>
-    <h3>Période : {{ $label }} — Généré le {{ now()->format('d/m/Y H:i') }}</h3>
+    <h3>Période : {{ $label }} - Généré le {{ now()->format('d/m/Y H:i') }}</h3>
 
     <table>
         <tbody>

@@ -9,9 +9,6 @@
         <h1 class="page-title">Modifier fournisseur</h1>
         <p class="page-subtitle">{{ $fournisseur->nom }}</p>
     </div>
-    <a href="{{ route('fournisseurs.show', $fournisseur->id) }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Retour
-    </a>
 </div>
 
 <div class="row justify-content-center">

@@ -124,6 +124,11 @@ class FournisseurController extends Controller
             'quantite_minimum' => 'required|integer|min:1',
         ]);
 
+        if ($fournisseur->produits()->where('produits.id', $request->produit_id)->exists()) {
+            return redirect()->route('fournisseurs.show', $fournisseur->id)
+                ->with('error', 'Ce produit est déjà lié à ce fournisseur.');
+        }
+
         $fournisseur->produits()->attach($request->produit_id, [
             'prix_achat' => $request->prix_achat,
             'delai_livraison' => $request->delai_livraison,

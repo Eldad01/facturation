@@ -10,9 +10,6 @@
         <p class="page-subtitle">{{ $commande->numero }}</p>
     </div>
     <div class="btn-group" role="group">
-        <a href="{{ route('commandes_achat.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Retour
-        </a>
         @if($commande->isEditable())
             <a href="{{ route('commandes_achat.edit', $commande->id) }}" class="btn btn-outline-warning">
                 <i class="bi bi-pencil me-1"></i> Modifier

@@ -3,14 +3,6 @@
 @section('title', 'Details de la facture')
 
 @section('content')
-@php
-    $retourTab = match(true) {
-        $facture->type_document === 'pro-forma' => 'devis',
-        $facture->status === 'payee' => 'recus',
-        default => 'attente',
-    };
-    $retourRoute = route('factures.index', ['tab' => $retourTab]);
-@endphp
 {{-- Page Header --}}
 <div class="page-header">
     <div>
@@ -18,9 +10,6 @@
         <p class="page-subtitle">{{ $facture->numero_facture }}</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ $retourRoute }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Retour
-        </a>
         <a href="{{ route('pdf.generate', $facture->id) }}" class="btn btn-primary" target="_blank">
             <i class="bi bi-printer me-1"></i> Imprimer
         </a>
@@ -47,7 +36,7 @@
                 <div class="row mb-4">
                     <div class="col-12 col-md-6">
                         <h6 class="text-muted mb-2"><i class="bi bi-person me-1"></i>Client</h6>
-                        <p class="fw-semibold mb-0">{{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}</p>
+                        <p class="fw-semibold mb-0">{{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '-' }}</p>
                         @if($facture->client?->telephone)
                             <p class="text-muted small mb-0">
                                 <i class="bi bi-telephone me-1"></i>{{ $facture->client->telephone }}
@@ -101,7 +90,7 @@
                             @foreach($facture->lignes as $ligne)
                                 <tr>
                                     <td>
-                                        {{ $ligne->produit->nom ?? '—' }}
+                                        {{ $ligne->produit->nom ?? '-' }}
                                         <span class="d-md-none d-block small text-muted">{{ number_format($ligne->prix_unitaire, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }} / unite</span>
                                     </td>
                                     <td class="text-center">{{ $ligne->quantite }}</td>
@@ -189,14 +178,14 @@
                                             <td>{{ $paiement->date_paiement?->format('d/m/Y') ?? $paiement->created_at->format('d/m/Y') }}</td>
                                             <td class="small">
                                                 @foreach($paiement->lignes as $lp)
-                                                    {{ $lp->quantite }} × {{ $lp->ligneFacture->produit->nom ?? '—' }}@if(!$loop->last), @endif
+                                                    {{ $lp->quantite }} × {{ $lp->ligneFacture->produit->nom ?? '-' }}@if(!$loop->last), @endif
                                                 @endforeach
                                                 <span class="d-md-none d-block text-muted">{{ ucfirst(str_replace('_', ' ', $paiement->mode)) }}</span>
                                             </td>
                                             <td class="text-end">{{ number_format($paiement->montant, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                             <td class="d-none d-md-table-cell">{{ ucfirst(str_replace('_', ' ', $paiement->mode)) }}</td>
-                                            <td class="d-none d-lg-table-cell">{{ $paiement->reference ?? '—' }}</td>
-                                            <td class="d-none d-lg-table-cell">{{ $paiement->note ?? '—' }}</td>
+                                            <td class="d-none d-lg-table-cell">{{ $paiement->reference ?? '-' }}</td>
+                                            <td class="d-none d-lg-table-cell">{{ $paiement->note ?? '-' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -205,13 +194,14 @@
                     </div>
                 @endif
 
-                @if(!$facture->isPaid())
+                @if($facture->peutRecevoirPaiement())
+                    @php $coefficientPaiement = $facture->coefficient_paiement; @endphp
                     <div class="modern-card mb-4">
                         <div class="card-body">
                             <h5 class="mb-2"><i class="bi bi-credit-card-2-front me-2"></i>Enregistrer un paiement</h5>
                             <p class="text-muted small mb-4">
                                 Sélectionnez les pièces réglées maintenant. Chaque pièce se règle en une fois,
-                                entièrement — impossible de payer une fraction d'une même pièce en plusieurs fois.
+                                entièrement - impossible de payer une fraction d'une même pièce en plusieurs fois.
                             </p>
 
                             @error('lignes')
@@ -235,11 +225,11 @@
                                             @foreach($facture->lignes as $ligne)
                                                 @if(!$ligne->isFullyPaid())
                                                     @php
-                                                        $prixUnitaireNet = $ligne->quantite > 0 ? round($ligne->total_ligne / $ligne->quantite) : 0;
+                                                        $prixUnitaireNet = $ligne->quantite > 0 ? round(($ligne->total_ligne * $coefficientPaiement) / $ligne->quantite) : 0;
                                                     @endphp
                                                     <tr>
                                                         <td class="align-middle">
-                                                            {{ $ligne->produit->nom ?? '—' }}
+                                                            {{ $ligne->produit->nom ?? '-' }}
                                                             <span class="d-sm-none d-block small text-muted">Restant : {{ $ligne->quantite_restante }}</span>
                                                         </td>
                                                         <td class="text-center align-middle d-none d-sm-table-cell">{{ $ligne->quantite_restante }}</td>

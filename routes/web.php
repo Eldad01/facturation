@@ -159,7 +159,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('role:admin')->group(function () {
-        Route::resource('commandes-achat', CommandeAchatController::class)->names('commandes_achat');
+        Route::resource('commandes-achat', CommandeAchatController::class)
+            ->names('commandes_achat')
+            ->parameters(['commandes-achat' => 'commande']);
         Route::post('/commandes-achat/{commande}/add-ligne', [CommandeAchatController::class, 'addLigne'])
             ->name('commandes_achat.add_ligne');
         Route::delete('/commandes-achat/{commande}/remove-ligne/{ligne}', [CommandeAchatController::class, 'removeLigne'])
@@ -199,7 +201,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::delete('/settings/users/{user}', [SettingController::class, 'destroyUser'])
             ->name('settings.users.destroy');
 
-        Route::match(['get', 'patch'], '/settings/users/{user}/toggle', [SettingController::class, 'toggleUserStatus'])
+        Route::patch('/settings/users/{user}/toggle',[SettingController::class, 'toggleUserStatus'])
             ->name('settings.users.toggle');
 
         Route::post('/settings/users/{user}/reset-password', [SettingController::class, 'resetPassword'])

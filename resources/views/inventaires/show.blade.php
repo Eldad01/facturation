@@ -19,9 +19,6 @@
         <a href="{{ route('inventaires.pdf', $inventaire->id) }}" class="btn btn-outline-primary btn-sm" target="_blank">
             <i class="bi bi-printer me-1"></i> Imprimer / Exporter
         </a>
-        <a href="{{ route('inventaires.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Retour
-        </a>
     </div>
 </div>
 
@@ -88,7 +85,7 @@
                             @php $totalEcartValorise += $ligne->ecart_valorise ?? 0; @endphp
                             <tr>
                                 <td class="align-middle">
-                                    {{ $ligne->produit->nom ?? '—' }}
+                                    {{ $ligne->produit->nom ?? '-' }}
                                     <span class="d-sm-none d-block small text-muted">Théo. : {{ $ligne->stock_theorique }}</span>
                                 </td>
                                 <td class="text-center align-middle d-none d-sm-table-cell">{{ $ligne->stock_theorique }}</td>
@@ -103,7 +100,7 @@
                                 </td>
                                 <td class="text-center align-middle">
                                     @if($ligne->stock_reel === null)
-                                        <span class="text-muted">—</span>
+                                        <span class="text-muted">-</span>
                                     @elseif($ligne->ecart == 0)
                                         <span class="badge bg-success-subtle text-success">0</span>
                                     @elseif($ligne->ecart > 0)
@@ -114,7 +111,7 @@
                                 </td>
                                 <td class="text-end align-middle d-none d-md-table-cell">
                                     @if($ligne->ecart_valorise === null)
-                                        <span class="text-muted">—</span>
+                                        <span class="text-muted">-</span>
                                     @else
                                         <span class="{{ $ligne->ecart_valorise < 0 ? 'text-danger' : ($ligne->ecart_valorise > 0 ? 'text-primary' : 'text-muted') }}">
                                             {{ $ligne->ecart_valorise > 0 ? '+' : '' }}{{ number_format($ligne->ecart_valorise, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}

@@ -9,9 +9,6 @@
         <h1 class="page-title">État factures</h1>
         <p class="page-subtitle d-none d-sm-block">Reçus filtrés par période</p>
     </div>
-    <a href="{{ route('rapports.index') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Retour</span>
-    </a>
 </div>
 
 {{-- Filters --}}
@@ -76,7 +73,7 @@
                     @forelse($factures as $facture)
                         <tr>
                             <td class="fw-semibold">
-                                {{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '' }}
+                                {{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '' }}
                                 <span class="d-block small text-muted fw-normal">{{ $facture->numero_facture }}</span>
                             </td>
                             <td class="d-none d-md-table-cell text-muted">{{ $facture->created_at->format('d/m/Y') }}</td>

@@ -36,11 +36,11 @@ class FactureController extends Controller
                     $qq->whereHas('client', function ($qc) use ($mots) {
                         foreach ($mots as $mot) {
                             $qc->where(function ($w) use ($mot) {
-                                $w->where('nom', 'like', "%$mot%")
-                                  ->orWhere('prenom', 'like', "%$mot%");
+                                $w->where('nom', self::likeOperator(), "%$mot%")
+                                  ->orWhere('prenom', self::likeOperator(), "%$mot%");
                             });
                         }
-                    })->orWhere('numero_facture', 'like', "%$search%");
+                    })->orWhere('numero_facture', self::likeOperator(), "%$search%");
                 });
             });
         };

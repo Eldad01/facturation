@@ -56,7 +56,7 @@
                             @if(auth()->user()->isAdmin())
                                 <td class="text-center text-muted d-none d-lg-table-cell">{{ $produit->seuil_alerte }}</td>
                             @else
-                                <td class="text-center text-muted d-none d-lg-table-cell">{{ $produit->dernier_stock_reel ?? '—' }}</td>
+                                <td class="text-center text-muted d-none d-lg-table-cell">{{ $produit->dernier_stock_reel ?? '-' }}</td>
                             @endif
                             <td class="text-end">
                                 <div class="action-buttons justify-content-end">

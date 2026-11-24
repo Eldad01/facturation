@@ -10,9 +10,6 @@
         <p class="page-subtitle">{{ $fournisseur->nom }}</p>
     </div>
     <div class="btn-group" role="group">
-        <a href="{{ route('fournisseurs.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Retour
-        </a>
         @auth
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('fournisseurs.edit', $fournisseur->id) }}" class="btn btn-outline-warning">

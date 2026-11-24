@@ -16,9 +16,6 @@
             @endif
         </p>
     </div>
-    <a href="{{ route('clients.index') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Retour
-    </a>
 </div>
 
 {{-- Client Info Card --}}

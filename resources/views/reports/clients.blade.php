@@ -10,9 +10,6 @@
         <p class="page-subtitle d-none d-sm-block">Solde dû et historique d'achats</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('rapports.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Retour</span>
-        </a>
         <a href="{{ route('rapports.clients.pdf') }}" target="_blank" class="btn btn-primary btn-sm">
             <i class="bi bi-file-earmark-pdf me-1"></i><span class="d-none d-sm-inline">Télécharger PDF</span>
         </a>

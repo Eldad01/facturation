@@ -20,15 +20,15 @@ return new class extends Migration
 
         // Update factures table
         Schema::table('factures', function (Blueprint $table) {
-            $table->bigInteger('total')->change();
+            $table->bigInteger('total')->default(0)->change();
         });
 
         // Update produits table
         Schema::table('produits', function (Blueprint $table) {
-            $table->bigInteger('prix_achat')->change();
+            $table->bigInteger('prix_achat')->nullable()->change();
             $table->bigInteger('prix_vente')->change();
-            $table->bigInteger('stock')->change();
-            $table->bigInteger('seuil_alerte')->change();
+            $table->bigInteger('stock')->default(0)->change();
+            $table->bigInteger('seuil_alerte')->default(5)->change();
         });
 
         // Update mouvements_stock table
@@ -49,14 +49,14 @@ return new class extends Migration
         });
 
         Schema::table('factures', function (Blueprint $table) {
-            $table->decimal('total', 10, 2)->change();
+            $table->decimal('total', 10, 2)->default(0)->change();
         });
 
         Schema::table('produits', function (Blueprint $table) {
-            $table->decimal('prix_achat', 10, 2)->change();
+            $table->decimal('prix_achat', 10, 2)->nullable()->change();
             $table->decimal('prix_vente', 10, 2)->change();
-            $table->integer('stock')->change();
-            $table->integer('seuil_alerte')->change();
+            $table->integer('stock')->default(0)->change();
+            $table->integer('seuil_alerte')->default(5)->change();
         });
 
         Schema::table('mouvements_stock', function (Blueprint $table) {

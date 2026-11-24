@@ -18,7 +18,7 @@
 </head>
 <body>
     <h1>État clients</h1>
-    <h3>Généré le {{ now()->format('d/m/Y H:i') }} — {{ $clients->count() }} client(s)</h3>
+    <h3>Généré le {{ now()->format('d/m/Y H:i') }} - {{ $clients->count() }} client(s)</h3>
 
     <table>
         <thead>

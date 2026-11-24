@@ -17,7 +17,7 @@
 </head>
 <body>
     <h1>État produits</h1>
-    <h3>Généré le {{ now()->format('d/m/Y H:i') }} — Top ventes période : {{ $label }}</h3>
+    <h3>Généré le {{ now()->format('d/m/Y H:i') }} - Top ventes période : {{ $label }}</h3>
     <h3>Valorisation totale du stock : {{ number_format($valorisationTotale, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</h3>
 
     <h2 class="mt-3">Top produits vendus</h2>
@@ -27,7 +27,7 @@
         </thead>
         <tbody>
             @forelse($topProduits as $tp)
-                <tr><td>{{ $tp->produit->nom ?? '—' }}</td><td class="text-right">{{ $tp->total }}</td></tr>
+                <tr><td>{{ $tp->produit->nom ?? '-' }}</td><td class="text-right">{{ $tp->total }}</td></tr>
             @empty
                 <tr><td colspan="2">Aucune vente sur cette période.</td></tr>
             @endforelse

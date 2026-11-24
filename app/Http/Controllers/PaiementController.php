@@ -24,6 +24,10 @@ class PaiementController extends Controller
             'date_paiement' => 'nullable|date',
         ]);
 
+        if ($facture->type_document !== 'recu' || $facture->status === 'annule') {
+            return back()->withErrors(['lignes' => 'Seule une facture validée (reçu) et non annulée peut recevoir un paiement.']);
+        }
+
         $selections = collect($request->lignes)->filter(fn($l) => (int) $l['quantite'] > 0);
 
         if ($selections->isEmpty()) {
@@ -48,6 +52,9 @@ class PaiementController extends Controller
                 ]);
 
                 $montantTotal = 0;
+                $derniereLignePaiement = null;
+                // Répartit la remise globale et la TVA de la facture sur chaque pièce
+                $coefficient = $facture->coefficient_paiement;
 
                 foreach ($selections as $selection) {
                     $ligne = $lignes[$selection['ligne_id']] ?? null;
@@ -63,18 +70,19 @@ class PaiementController extends Controller
                         );
                     }
 
-                    $prixUnitaireNet = $ligne->quantite > 0 ? $ligne->total_ligne / $ligne->quantite : 0;
+                    $totalLigneTtc = (int) round($ligne->total_ligne * $coefficient);
+                    $prixUnitaireNet = $ligne->quantite > 0 ? $totalLigneTtc / $ligne->quantite : 0;
                     $nouvelleQuantitePayee = $ligne->quantite_payee + $quantiteAPayer;
 
                     if ($nouvelleQuantitePayee >= $ligne->quantite) {
-                        // Dernier règlement de la ligne : absorbe l'arrondi pour tomber pile sur total_ligne
+                        // Dernier règlement de la ligne : absorbe l'arrondi pour tomber pile sur le total TTC de la ligne
                         $montantDejaPaye = LignePaiement::where('ligne_facture_id', $ligne->id)->sum('montant');
-                        $montantLigne = $ligne->total_ligne - $montantDejaPaye;
+                        $montantLigne = $totalLigneTtc - $montantDejaPaye;
                     } else {
                         $montantLigne = (int) round($prixUnitaireNet * $quantiteAPayer);
                     }
 
-                    LignePaiement::create([
+                    $derniereLignePaiement = LignePaiement::create([
                         'paiement_id' => $paiement->id,
                         'ligne_facture_id' => $ligne->id,
                         'quantite' => $quantiteAPayer,
@@ -86,10 +94,20 @@ class PaiementController extends Controller
                     $montantTotal += $montantLigne;
                 }
 
+                $toutesLignesPayees = $facture->lignes()->whereColumn('quantite_payee', '<', 'quantite')->doesntExist();
+
+                if ($toutesLignesPayees && $derniereLignePaiement) {
+                    // Solde final : absorbe les écarts d'arrondi pour que le cumul payé = total TTC exact
+                    $ecart = (int) round($facture->total - ($facture->montant_paye + $montantTotal));
+                    if ($ecart !== 0) {
+                        $derniereLignePaiement->update(['montant' => $derniereLignePaiement->montant + $ecart]);
+                        $montantTotal += $ecart;
+                    }
+                }
+
                 $paiement->update(['montant' => $montantTotal]);
 
                 $facture->montant_paye = $facture->montant_paye + $montantTotal;
-                $toutesLignesPayees = $facture->lignes()->whereColumn('quantite_payee', '<', 'quantite')->doesntExist();
                 $facture->date_paiement = $toutesLignesPayees ? now()->format('Y-m-d') : $facture->date_paiement;
                 $facture->status = $toutesLignesPayees ? 'payee' : 'partiellement_payee';
                 $facture->save();

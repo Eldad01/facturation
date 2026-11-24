@@ -91,8 +91,8 @@
                             @forelse($devis as $facture)
                                 <tr>
                                     <td class="fw-semibold">{{ $facture->numero_facture }}</td>
-                                    <td>{{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}</td>
-                                    <td class="d-none d-md-table-cell">{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
+                                    <td>{{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '-' }}</td>
+                                    <td class="d-none d-md-table-cell">{{ $facture->date_echeance?->format('d/m/Y') ?? '-' }}</td>
                                     <td class="text-end fw-semibold">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td class="text-end">
                                         <div class="action-buttons justify-content-end">
@@ -228,10 +228,10 @@
                                 @php $enRetard = $facture->isOverdue(); @endphp
                                 <tr class="{{ $enRetard ? 'table-danger' : '' }}">
                                     <td class="fw-semibold">
-                                        {{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}
+                                        {{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '-' }}
                                         <span class="d-block small text-muted fw-normal">{{ $facture->numero_facture }}</span>
                                     </td>
-                                    <td class="d-none d-md-table-cell">{{ $facture->date_echeance?->format('d/m/Y') ?? '—' }}</td>
+                                    <td class="d-none d-md-table-cell">{{ $facture->date_echeance?->format('d/m/Y') ?? '-' }}</td>
                                     <td class="text-end d-none d-md-table-cell">{{ number_format($facture->total, 0, ',', ' ') }} {{ $app_settings->devise ?? 'FCFA' }}</td>
                                     <td>
                                         <span class="badge {{ $facture->etat_badge_class }} d-block d-md-inline">{{ $facture->etat_label }}</span>
@@ -341,7 +341,7 @@
                             @forelse($recus as $facture)
                                 <tr>
                                     <td class="fw-semibold">
-                                        {{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '—' }}
+                                        {{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '-' }}
                                         <span class="d-block small text-muted fw-normal">{{ $facture->numero_facture }}</span>
                                     </td>
                                     <td class="d-none d-md-table-cell"><span class="badge {{ $facture->etat_badge_class }}">{{ $facture->etat_label }}</span></td>

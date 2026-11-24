@@ -9,9 +9,6 @@
         <h1 class="page-title">Reapprovisionnement</h1>
         <p class="page-subtitle">{{ $produit->nom }}</p>
     </div>
-    <a href="{{ route('produits.index') }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Retour
-    </a>
 </div>
 
 <div class="row justify-content-center">
@@ -71,7 +68,7 @@
 
                     <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
                         <span><i class="bi bi-calculator me-1"></i>Nouveau coût moyen pondéré (CUMP)</span>
-                        <span class="fw-bold" id="cump_preview">—</span>
+                        <span class="fw-bold" id="cump_preview">-</span>
                     </div>
 
                     <div class="d-flex gap-2 justify-content-end">
@@ -111,7 +108,7 @@
             const nouveauCump = ((stockActuel * cumpActuel) + (quantite * prixUnitaire)) / diviseur;
             cumpPreview.textContent = Math.round(nouveauCump).toLocaleString('fr-FR') + ' {{ $app_settings->devise ?? "FCFA" }} / unité';
         } else {
-            cumpPreview.textContent = '—';
+            cumpPreview.textContent = '-';
         }
     }
 

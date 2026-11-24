@@ -380,7 +380,7 @@
 {{-- ================= CLIENT ================= --}}
 <div class="client-box">
     <div class="label">Doit :</div>
-    <div class="name">{{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '' }}</div>
+    <div class="name">{{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '' }}</div>
     <div class="meta">
         @if($facture->client?->telephone){{ $facture->client->telephone }}<br>@endif
         @if($facture->client?->email){{ $facture->client->email }}<br>@endif
@@ -426,7 +426,7 @@
                 <td class="text-center">{{ $ligne->quantite }}</td>
                 <td class="text-right">{{ number_format($ligne->prix_unitaire, 0, ',', ' ') }}</td>
                 @if($hasRemiseLigne)
-                    <td class="text-right">{{ $ligne->remise > 0 ? number_format($ligne->remise, 0, ',', ' ') : '—' }}</td>
+                    <td class="text-right">{{ $ligne->remise > 0 ? number_format($ligne->remise, 0, ',', ' ') : '-' }}</td>
                 @endif
                 <td class="text-right">{{ number_format($ligne->total_ligne, 0, ',', ' ') }}</td>
             </tr>
@@ -522,7 +522,7 @@
                 <tr>
                     <td>{{ $paiement->date_paiement?->format('d/m/Y') ?? $paiement->created_at->format('d/m/Y') }}</td>
                     <td>{{ ucfirst(str_replace('_', ' ', $paiement->mode)) }}</td>
-                    <td>{{ $paiement->reference ?? '—' }}</td>
+                    <td>{{ $paiement->reference ?? '-' }}</td>
                     <td class="text-right">{{ number_format($paiement->montant, 0, ',', ' ') }}</td>
                 </tr>
             @endforeach
@@ -549,7 +549,7 @@
     @endif
     <div class="legal">
         Document généré le {{ now()->format('d/m/Y \à H:i') }}
-        @if($settings?->company_name) — {{ $settings->company_name }}@endif
+        @if($settings?->company_name) - {{ $settings->company_name }}@endif
     </div>
 </div>
 

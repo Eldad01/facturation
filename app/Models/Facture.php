@@ -66,6 +66,26 @@ class Facture extends Model
         return max(0, $this->total - ($this->avance ?? 0) - $this->montant_paye);
     }
 
+    /**
+     * Rapport entre le total TTC de la facture et la somme des lignes (HT, après remises de ligne).
+     * Sert à répartir la remise globale et la TVA sur chaque pièce lors d'un paiement,
+     * pour que le cumul des paiements tombe exactement sur le total TTC.
+     */
+    public function getCoefficientPaiementAttribute(): float
+    {
+        $sommeLignes = $this->lignes->sum('total_ligne');
+
+        return $sommeLignes > 0 ? $this->total / $sommeLignes : 0;
+    }
+
+    /**
+     * Seul un reçu (facture validée) non annulé peut recevoir un paiement.
+     */
+    public function peutRecevoirPaiement(): bool
+    {
+        return $this->type_document === 'recu' && $this->status !== 'annule' && !$this->isPaid();
+    }
+
     public function isPaid(): bool
     {
         return $this->status === 'payee' || $this->balance <= 0;

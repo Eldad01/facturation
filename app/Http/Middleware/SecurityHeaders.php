@@ -40,13 +40,17 @@ class SecurityHeaders
             );
         }
 
-        // Content Security Policy
+        // Content Security Policy : toutes les ressources (Bootstrap, icônes, jQuery, Select2,
+        // Chart.js, police Inter) sont servies localement depuis public/vendor, aucun CDN autorisé.
         $csp = "default-src 'self'; " .
-               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com; " .
-               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; " .
-               "img-src 'self' data: https:; " .
-               "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; " .
+               "script-src 'self' 'unsafe-inline'; " .
+               "style-src 'self' 'unsafe-inline'; " .
+               "img-src 'self' data: blob:; " .
+               "font-src 'self' data:; " .
                "connect-src 'self'; " .
+               "object-src 'none'; " .
+               "base-uri 'self'; " .
+               "form-action 'self'; " .
                "frame-ancestors 'self';";
 
         $response->headers->set('Content-Security-Policy', $csp);

@@ -19,7 +19,7 @@ class ActivityLogsExport implements FromCollection, WithHeadings
         $this->periodInfo = $periodInfo;
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         if ($this->logs instanceof \Illuminate\Database\Eloquent\Collection) {
             $logs = $this->logs;
@@ -29,7 +29,7 @@ class ActivityLogsExport implements FromCollection, WithHeadings
             $query = ActivityLog::with('user');
 
             if (!empty($filters['search'])) {
-                $query->where('description', 'like', '%' . $filters['search'] . '%');
+                $query->where('description', DB::getDriverName() === 'pgsql' ? 'ilike' : 'like','%' . $filters['search'] . '%');
             }
 
             if (!empty($filters['date_from'])) {

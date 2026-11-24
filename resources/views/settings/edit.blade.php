@@ -356,11 +356,15 @@
                                                                 title="Reinitialiser le mot de passe">
                                                             <i class="bi bi-key"></i>
                                                         </button>
-                                                        <a href="{{ route('settings.users.toggle', $user->id) }}" 
-                                                           class="btn btn-sm btn-outline-{{ $user->is_active ? 'warning' : 'success' }}"
-                                                           title="{{ $user->is_active ? 'Desactiver' : 'Activer' }}">
-                                                            <i class="bi bi-{{ $user->is_active ? 'person-dash' : 'person-check' }}"></i>
-                                                        </a>
+                                                        <form action="{{ route('settings.users.toggle', $user->id) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <button type="submit"
+                                                                    class="btn btn-sm btn-outline-{{ $user->is_active ? 'warning' : 'success' }}"
+                                                                    title="{{ $user->is_active ? 'Desactiver' : 'Activer' }}">
+                                                                <i class="bi bi-{{ $user->is_active ? 'person-dash' : 'person-check' }}"></i>
+                                                            </button>
+                                                        </form>
                                                         <form action="{{ route('settings.users.destroy', $user->id) }}" method="POST" class="d-inline">
                                                             @csrf
                                                             @method('DELETE')

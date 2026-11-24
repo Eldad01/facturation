@@ -9,9 +9,6 @@
         <h1 class="page-title">Modifier le produit</h1>
         <p class="page-subtitle">{{ $produit->nom }}</p>
     </div>
-    <a href="{{ route('produits.show', $produit->id) }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Retour
-    </a>
 </div>
 
 <div class="row justify-content-center">

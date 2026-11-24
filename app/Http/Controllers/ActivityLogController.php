@@ -48,7 +48,7 @@ class ActivityLogController extends Controller
 
         $logs = ActivityLog::with('user')
             ->when($search, function ($query, $search) {
-                $query->where('description', 'like', "%$search%");
+                $query->where('description', self::likeOperator(), "%$search%");
             })
             ->when($dateFrom, function ($query, $dateFrom) {
                 $query->whereDate('created_at', '>=', $dateFrom);
@@ -142,7 +142,7 @@ class ActivityLogController extends Controller
         // Filtrer par rôle utilisateur si demandé
         $logsQuery = ActivityLog::with('user')
             ->when($request->search, function ($query, $search) {
-                $query->where('description', 'like', "%$search%");
+                $query->where('description', self::likeOperator(), "%$search%");
             })
             ->when($request->date_from, function ($query, $dateFrom) {
                 $query->whereDate('created_at', '>=', $dateFrom);
@@ -188,7 +188,7 @@ class ActivityLogController extends Controller
         // Filtrer par rôle utilisateur si demandé
         $logsQuery = ActivityLog::with('user')
             ->when($request->search, function ($query, $search) {
-                $query->where('description', 'like', "%$search%");
+                $query->where('description', self::likeOperator(), "%$search%");
             })
             ->when($request->date_from, function ($query, $dateFrom) {
                 $query->whereDate('created_at', '>=', $dateFrom);

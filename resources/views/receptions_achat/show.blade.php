@@ -9,9 +9,6 @@
         <h1 class="page-title">Réception d'achat</h1>
         <p class="page-subtitle">{{ $reception->numero }}</p>
     </div>
-    <a href="{{ route('commandes_achat.show', $reception->commande_achat_id) }}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Retour
-    </a>
 </div>
 
 {{-- Reception Info --}}

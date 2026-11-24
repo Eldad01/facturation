@@ -36,7 +36,7 @@
             </span>
         </h3>
         <p>
-            <strong>Client :</strong> {{ $facture->client->nom ?? '—' }} {{ $facture->client->prenom ?? '' }}<br>
+            <strong>Client :</strong> {{ $facture->client->nom ?? '-' }} {{ $facture->client->prenom ?? '' }}<br>
             <strong>Date :</strong> {{ $facture->created_at->format('d/m/Y H:i') }}
         </p>
 
@@ -52,7 +52,7 @@
             <tbody>
                 @foreach($facture->lignes as $ligne)
                     <tr>
-                        <td>{{ $ligne->produit->nom ?? '—' }}</td>
+                        <td>{{ $ligne->produit->nom ?? '-' }}</td>
                         <td>{{ $ligne->quantite }}</td>
                         <td class="text-right">{{ number_format($ligne->prix_unitaire, 2, ',', ' ') }}</td>
                         <td class="text-right">{{ number_format($ligne->total_ligne, 2, ',', ' ') }}</td>

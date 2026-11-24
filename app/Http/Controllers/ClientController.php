@@ -23,11 +23,11 @@ class ClientController extends Controller
                 $q->where(function ($qc) use ($mots) {
                     foreach ($mots as $mot) {
                         $qc->where(function ($w) use ($mot) {
-                            $w->where('nom', 'like', "%$mot%")
-                              ->orWhere('prenom', 'like', "%$mot%");
+                            $w->where('nom', self::likeOperator(), "%$mot%")
+                              ->orWhere('prenom', self::likeOperator(), "%$mot%");
                         });
                     }
-                })->orWhere('telephone', 'like', "%{$search}%");
+                })->orWhere('telephone', self::likeOperator(), "%{$search}%");
             });
         }
 
@@ -64,8 +64,8 @@ class ClientController extends Controller
         ]);
 
         $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse', 'type_client', 'ifu', 'rccm', 'boite_postale', 'regime_imposition', 'contact_nom');
-        $data['nom'] = strtoupper($data['nom']);
-        $data['prenom'] = ucfirst(strtolower($data['prenom']));
+        $data['nom'] = mb_strtoupper($data['nom'], 'UTF-8');
+        $data['prenom'] = mb_convert_case($data['prenom'], MB_CASE_TITLE, 'UTF-8');
 
         $client = Client::create($data);
 
@@ -108,8 +108,8 @@ class ClientController extends Controller
         ];
 
         $data = $request->only('nom', 'prenom', 'telephone', 'email', 'adresse', 'type_client', 'ifu', 'rccm', 'boite_postale', 'regime_imposition', 'contact_nom');
-        $data['nom'] = strtoupper($data['nom']);
-        $data['prenom'] = ucfirst(strtolower($data['prenom']));
+        $data['nom'] = mb_strtoupper($data['nom'], 'UTF-8');
+        $data['prenom'] = mb_convert_case($data['prenom'], MB_CASE_TITLE, 'UTF-8');
 
         $client->update($data);
 

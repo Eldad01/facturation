@@ -10,19 +10,17 @@
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="{{ asset('vendor/inter/inter.css') }}" rel="stylesheet">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/bootstrap/bootstrap.min.css') }}" rel="stylesheet">
     
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ asset('vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
 
     <!-- Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap5.min.css" rel="stylesheet" />
+    <link href="{{ asset('vendor/select2/select2.min.css') }}" rel="stylesheet" />
+    <link href="{{ asset('vendor/select2/select2-bootstrap-5-theme.min.css') }}" rel="stylesheet" />
 
     <style>
         :root {
@@ -994,6 +992,71 @@
             width: 2.5em;
             margin-left: -2.5em;
         }
+
+        /* Fil d'Ariane + bouton retour */
+        .breadcrumb-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .breadcrumb-bar .min-w-0 { min-width: 0; }
+
+        .breadcrumb-bar .breadcrumb {
+            font-size: 0.8125rem;
+            flex-wrap: nowrap;
+            overflow: hidden;
+        }
+
+        .breadcrumb-bar .breadcrumb-item {
+            white-space: nowrap;
+        }
+
+        .breadcrumb-bar .breadcrumb-item a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-bar .breadcrumb-item a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        .breadcrumb-bar .breadcrumb-item.active {
+            color: var(--dark-text);
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .btn-retour {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            flex-shrink: 0;
+            padding: 0.3rem 0.75rem;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--dark-text);
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 50rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-retour:hover {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            background: rgba(13, 110, 253, 0.05);
+        }
+
+        /* Sur mobile : on n'affiche que le parent direct et la page courante */
+        @media (max-width: 575.98px) {
+            .breadcrumb-bar .breadcrumb-item:not(:nth-last-child(-n+2)) { display: none; }
+            .breadcrumb-bar .breadcrumb-item:nth-last-child(2)::before { display: none; }
+        }
     </style>
 
     @stack('head')
@@ -1175,6 +1238,36 @@
     {{-- Main Content --}}
     <main class="py-4" style="margin-top: 50px;">
         <div class="container">
+            {{-- Fil d'Ariane + bouton retour (générés depuis le nom de la route) --}}
+            @php
+                $breadcrumbs = \App\Support\Breadcrumbs::forRoute(request()->route());
+                $retourUrl = count($breadcrumbs) > 2 ? $breadcrumbs[count($breadcrumbs) - 2]['url'] : null;
+            @endphp
+            @if(count($breadcrumbs) > 1)
+                <div class="breadcrumb-bar">
+                    @if($retourUrl)
+                        <a href="{{ $retourUrl }}" class="btn-retour" title="Retour à : {{ $breadcrumbs[count($breadcrumbs) - 2]['label'] }}">
+                            <i class="bi bi-arrow-left"></i><span>Retour</span>
+                        </a>
+                    @endif
+                    <nav aria-label="Fil d'Ariane" class="flex-grow-1 min-w-0">
+                        <ol class="breadcrumb mb-0">
+                            @foreach($breadcrumbs as $crumb)
+                                @if($crumb['url'])
+                                    <li class="breadcrumb-item">
+                                        <a href="{{ $crumb['url'] }}">
+                                            @if($loop->first)<i class="bi bi-house-door me-1"></i>@endif{{ $crumb['label'] }}
+                                        </a>
+                                    </li>
+                                @else
+                                    <li class="breadcrumb-item active" aria-current="page">{{ $crumb['label'] }}</li>
+                                @endif
+                            @endforeach
+                        </ol>
+                    </nav>
+                </div>
+            @endif
+
             {{-- Flash Messages --}}
             @if(session('success'))
                 <div class="alert alert-success d-flex align-items-center" role="alert">
@@ -1218,14 +1311,14 @@
     </footer>
 
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="{{ asset('vendor/jquery/jquery.min.js') }}"></script>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('vendor/bootstrap/bootstrap.bundle.min.js') }}"></script>
 
     <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/fr.js"></script>
+    <script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
+    <script src="{{ asset('vendor/select2/i18n/fr.js') }}"></script>
 
     <!-- Auto-hide Flash Messages -->
     <script>

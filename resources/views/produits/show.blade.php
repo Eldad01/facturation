@@ -10,9 +10,6 @@
         <p class="page-subtitle">{{ $produit->nom }}</p>
     </div>
     <div class="btn-group" role="group">
-        <a href="{{ route('produits.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Retour
-        </a>
         @auth
             @if(auth()->user()->isAdmin())
                 <a href="{{ route('produits.edit', $produit->id) }}" class="btn btn-outline-warning">
@@ -81,11 +78,11 @@
                     </div>
                     <div class="mb-2">
                         <span class="text-muted">Stock réel:</span>
-                        <span class="fw-semibold ms-2">{{ $produit->dernier_stock_reel ?? '—' }}</span>
+                        <span class="fw-semibold ms-2">{{ $produit->dernier_stock_reel ?? '-' }}</span>
                     </div>
                     <div class="mb-2">
                         <span class="text-muted">Dernier inventaire:</span>
-                        <span class="fw-semibold ms-2">{{ $produit->date_dernier_inventaire?->format('d/m/Y') ?? '—' }}</span>
+                        <span class="fw-semibold ms-2">{{ $produit->date_dernier_inventaire?->format('d/m/Y') ?? '-' }}</span>
                     </div>
                 @endif
                 <div class="mb-2">

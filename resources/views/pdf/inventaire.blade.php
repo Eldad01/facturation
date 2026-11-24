@@ -241,15 +241,15 @@
 <div class="audit-box">
     <div class="col">
         <div class="label">Ouvert par</div>
-        <div class="value">{{ $inventaire->userCreation->name ?? '—' }}</div>
+        <div class="value">{{ $inventaire->userCreation->name ?? '-' }}</div>
         <div class="label">Ouvert le</div>
         <div class="value">{{ $inventaire->created_at->format('d/m/Y à H:i') }}</div>
     </div>
     <div class="col">
         <div class="label">Validé par</div>
-        <div class="value">{{ $inventaire->userValidation->name ?? '— (non validé)' }}</div>
+        <div class="value">{{ $inventaire->userValidation->name ?? '- (non validé)' }}</div>
         <div class="label">Validé le</div>
-        <div class="value">{{ $inventaire->date_validation?->format('d/m/Y à H:i') ?? '—' }}</div>
+        <div class="value">{{ $inventaire->date_validation?->format('d/m/Y à H:i') ?? '-' }}</div>
     </div>
 </div>
 
@@ -292,12 +292,12 @@
             <tr>
                 <td class="text-center text-muted">{{ $index + 1 }}</td>
                 <td>{{ $ligne->produit->nom ?? 'Produit supprimé' }}</td>
-                <td>{{ $ligne->produit->sku ?? '—' }}</td>
+                <td>{{ $ligne->produit->sku ?? '-' }}</td>
                 <td class="text-center">{{ $ligne->stock_theorique }}</td>
-                <td class="text-center">{{ $ligne->stock_reel ?? '—' }}</td>
+                <td class="text-center">{{ $ligne->stock_reel ?? '-' }}</td>
                 <td class="text-center">
                     @if($ligne->ecart === null)
-                        —
+                        -
                     @elseif($ligne->ecart == 0)
                         0
                     @else
@@ -309,7 +309,7 @@
                 <td class="text-right">{{ number_format($ligne->produit->prix_achat ?? 0, 0, ',', ' ') }}</td>
                 <td class="text-right">
                     @if($ligne->ecart_valorise === null)
-                        —
+                        -
                     @else
                         <span class="{{ $ligne->ecart_valorise > 0 ? 'text-primary' : ($ligne->ecart_valorise < 0 ? 'text-danger' : '') }}">
                             {{ $ligne->ecart_valorise > 0 ? '+' : '' }}{{ number_format($ligne->ecart_valorise, 0, ',', ' ') }}
@@ -332,7 +332,7 @@
 </table>
 
 <div style="font-size:10px; color:#6c757d; margin-top:8px;">
-    {{ $inventaire->lignes->count() }} produit(s) au total — {{ $nbLignesComptees }} compté(s) — {{ $nbEcarts }} écart(s) constaté(s).
+    {{ $inventaire->lignes->count() }} produit(s) au total - {{ $nbLignesComptees }} compté(s) - {{ $nbEcarts }} écart(s) constaté(s).
 </div>
 
 {{-- ================= SIGNATURES ================= --}}
@@ -351,8 +351,8 @@
 <div class="footer">
     <div class="legal">
         Document généré le {{ now()->format('d/m/Y \à H:i') }}
-        @if($settings?->company_name) — {{ $settings->company_name }}@endif
-        — Document interne à conserver pour audit / contrôle.
+        @if($settings?->company_name) - {{ $settings->company_name }}@endif
+        - Document interne à conserver pour audit / contrôle.
     </div>
 </div>
 

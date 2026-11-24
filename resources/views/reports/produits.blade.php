@@ -10,9 +10,6 @@
         <p class="page-subtitle d-none d-sm-block">Stock, valorisation et top ventes</p>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('rapports.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i><span class="d-none d-sm-inline">Retour</span>
-        </a>
         <a href="{{ route('rapports.produits.pdf', request()->query()) }}" target="_blank" class="btn btn-primary btn-sm">
             <i class="bi bi-file-earmark-pdf me-1"></i><span class="d-none d-sm-inline">Télécharger PDF</span>
         </a>
@@ -58,7 +55,7 @@
 </div>
 
 <div class="modern-card mb-4">
-    <div class="card-header"><i class="bi bi-trophy me-2"></i>Top produits vendus — {{ $label }}</div>
+    <div class="card-header"><i class="bi bi-trophy me-2"></i>Top produits vendus - {{ $label }}</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
@@ -71,7 +68,7 @@
                 <tbody>
                     @forelse($topProduits as $tp)
                         <tr>
-                            <td class="fw-semibold">{{ $tp->produit->nom ?? '—' }}</td>
+                            <td class="fw-semibold">{{ $tp->produit->nom ?? '-' }}</td>
                             <td class="text-end">{{ $tp->total }}</td>
                         </tr>
                     @empty

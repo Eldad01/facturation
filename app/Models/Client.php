@@ -31,7 +31,7 @@ class Client extends Model
     // Nom complet formaté
     public function getNomCompletAttribute()
     {
-        return strtoupper($this->nom) . ' ' . ucfirst(strtolower($this->prenom));
+        return mb_strtoupper((string) $this->nom, 'UTF-8') . ' ' . mb_convert_case((string) $this->prenom, MB_CASE_TITLE, 'UTF-8');
     }
 
     public function isEntreprise(): bool

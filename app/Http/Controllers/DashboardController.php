@@ -7,6 +7,7 @@ use App\Models\Facture;
 use App\Models\Client;
 use App\Models\Produit;
 use App\Models\MouvementStock;
+use App\Models\Paiement;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -14,89 +15,106 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         /** =========================
-         *  FILTRES
+         *  PÉRIODE (mois sélectionné)
          *  ========================= */
-        $month = $request->month
-            ? Carbon::createFromFormat('Y-m', $request->month)
-            : now();
-
-        $year = $request->year ?? now()->year;
-        $day  = $request->day ? Carbon::parse($request->day) : now();
+        $month = now()->startOfMonth();
+        if ($request->filled('month') && preg_match('/^\d{4}-\d{2}$/', $request->month)) {
+            $month = Carbon::createFromFormat('!Y-m', $request->month)->startOfMonth();
+        }
+        if ($month->gt(now())) {
+            $month = now()->startOfMonth();
+        }
 
         $startOfMonth = $month->copy()->startOfMonth();
         $endOfMonth   = $month->copy()->endOfMonth();
+        $prevStart    = $month->copy()->subMonthNoOverflow()->startOfMonth();
+        $prevEnd      = $prevStart->copy()->endOfMonth();
+        $isCurrentMonth = $month->isSameMonth(now());
 
-        $startOfDay = $day->copy()->startOfDay();
-        $endOfDay   = $day->copy()->endOfDay();
-
-        /** =========================
-         *  FACTURATION
-         *  ========================= */
-
-        // Comptages
-        $proformasMonthCount = Facture::where('type_document', 'pro-forma')
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->count();
-
-        $recuMonthCount = Facture::where('type_document', 'recu')
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->count();
-
-        $recuMonthSum = Facture::where('type_document', 'recu')
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->sum('total');
-
-        $recuDaySum = Facture::where('type_document', 'recu')
-            ->whereBetween('created_at', [$startOfDay, $endOfDay])
-            ->sum('total');
-
-        $proformasMonthSum = Facture::where('type_document', 'pro-forma')
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->sum('total');
-
-        $recuYearSum = Facture::where('type_document', 'recu')
-            ->whereYear('created_at', $year)
-            ->sum('total');
-
-        // Clients
-        $clientsCount = Client::count();
+        // Reçus valides (une facture annulée ne compte pas dans le chiffre d'affaires)
+        $recus = fn () => Facture::where('type_document', 'recu')->where('status', '!=', 'annule');
+        $devis = fn () => Facture::where('type_document', 'pro-forma')->where('status', '!=', 'annule');
 
         /** =========================
-         *  COURBE DU CHIFFRE D’AFFAIRES
+         *  INDICATEURS CLÉS
          *  ========================= */
+        $caMois      = (float) $recus()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('total');
+        $caMoisPrec  = (float) $recus()->whereBetween('created_at', [$prevStart, $prevEnd])->sum('total');
+        $nbRecusMois = $recus()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+        $nbRecusMoisPrec = $recus()->whereBetween('created_at', [$prevStart, $prevEnd])->count();
+
+        $encaisseMois = (float) Paiement::whereHas('facture', fn ($q) => $q->where('status', '!=', 'annule'))
+            ->whereBetween('date_paiement', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->sum('montant');
+
+        $nbDevisMois  = $devis()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+        $montantDevisMois = (float) $devis()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('total');
+
+        $caAujourdhui = (float) $recus()->whereDate('created_at', now()->toDateString())->sum('total');
+        $caAnnee      = (float) $recus()->whereYear('created_at', $month->year)->sum('total');
+
+        // Reste à encaisser (toutes périodes confondues) : reçus non soldés
+        $impayesQuery = fn () => $recus()
+            ->where('status', '!=', 'payee')
+            ->whereRaw('total - montant_paye - COALESCE(avance, 0) > 0');
+        $resteAEncaisser = (float) $impayesQuery()
+            ->selectRaw('COALESCE(SUM(GREATEST(total - montant_paye - COALESCE(avance, 0), 0)), 0) as reste')
+            ->value('reste');
+        $nbImpayes = $impayesQuery()->count();
+
+        $facturesARelancer = $impayesQuery()
+            ->with('client')
+            ->orderBy('created_at')
+            ->limit(5)
+            ->get();
+
+        $variation = fn ($actuel, $precedent) => $precedent > 0
+            ? round((($actuel - $precedent) / $precedent) * 100, 1)
+            : null;
+        $variationCa = $variation($caMois, $caMoisPrec);
+        $variationRecus = $variation($nbRecusMois, $nbRecusMoisPrec);
+
+        /** =========================
+         *  COURBE QUOTIDIENNE (2 requêtes groupées)
+         *  ========================= */
+        $parJour = function ($query) use ($startOfMonth, $endOfMonth) {
+            return $query->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->selectRaw('DATE(created_at) as jour, SUM(total) as montant')
+                ->groupByRaw('DATE(created_at)')
+                ->pluck('montant', 'jour')
+                ->mapWithKeys(fn ($v, $k) => [Carbon::parse($k)->toDateString() => (float) $v]);
+        };
+        $recusParJour = $parJour($recus());
+        $devisParJour = $parJour($devis());
+
         $chartLabels = [];
         $chartRecu = [];
         $chartProforma = [];
-
-        for ($date = $startOfMonth->copy(); $date->lte($endOfMonth); $date->addDay()) {
-            $chartLabels[] = $date->format('d M');
-
-            $chartRecu[] = Facture::where('type_document', 'recu')
-                ->whereDate('created_at', $date)
-                ->sum('total');
-
-            $chartProforma[] = Facture::where('type_document', 'pro-forma')
-                ->whereDate('created_at', $date)
-                ->sum('total');
+        $dernierJour = $isCurrentMonth ? now()->copy() : $endOfMonth->copy();
+        for ($date = $startOfMonth->copy(); $date->lte($dernierJour); $date->addDay()) {
+            $key = $date->toDateString();
+            $chartLabels[] = $date->format('d/m');
+            $chartRecu[] = $recusParJour[$key] ?? 0;
+            $chartProforma[] = $devisParJour[$key] ?? 0;
         }
 
         /** =========================
          *  STOCK
          *  ========================= */
         $produitsCount = Produit::count();
-        $stockTotal = Produit::sum('stock');
         $produitsCritiquesCount = Produit::whereColumn('stock', '<=', 'seuil_alerte')->count();
+        $valeurStock = (float) Produit::selectRaw('COALESCE(SUM(stock * prix_achat), 0) as v')->value('v');
 
-        $entreesStockMonth = MouvementStock::where('type', 'entree')
+        $entreesStockMonth = (int) MouvementStock::where('type', 'entree')
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->sum('quantite');
 
-        $sortiesStockMonth = MouvementStock::where('type', 'sortie')
+        $sortiesStockMonth = (int) MouvementStock::where('type', 'sortie')
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->sum('quantite');
 
         $produitsCritiques = Produit::whereColumn('stock', '<=', 'seuil_alerte')
-            ->orderBy('stock', 'asc')
+            ->orderBy('stock')
             ->paginate(5, ['*'], 'stock_page')
             ->withQueryString();
 
@@ -110,54 +128,25 @@ class DashboardController extends Controller
             ->get();
 
         /** =========================
-         *  DERNIERS ÉLÉMENTS
+         *  ACTIVITÉ RÉCENTE
          *  ========================= */
+        $clientsCount = Client::count();
+
         $recentFactures = Facture::with('client')
             ->orderByDesc('created_at')
-            ->paginate(5, ['*'], 'factures_page')
+            ->orderByDesc('id')
+            ->paginate(6, ['*'], 'factures_page')
             ->withQueryString();
 
-        $recentMouvements = MouvementStock::with('produit')
-            ->orderByDesc('created_at')
-            ->limit(5)
-            ->get();
-
-        /** =========================
-         *  ENVOI À LA VUE
-         *  ========================= */
         return view('dashboard.index', compact(
-            'month',
-            'year',
-            'day',
-
-            // Facturation
-            'proformasMonthCount',
-            'recuMonthCount',
-            'recuMonthSum',
-            'recuDaySum',
-            'proformasMonthSum',
-            'recuYearSum',
-
-            // Courbe
-            'chartLabels',
-            'chartRecu',
-            'chartProforma',
-
-            // Clients
-            'clientsCount',
-
-            // Stock
-            'produitsCount',
-            'stockTotal',
-            'produitsCritiquesCount',
-            'entreesStockMonth',
-            'sortiesStockMonth',
-
-            // Listes
-            'produitsCritiques',
-            'topProduitsSortie',
-            'recentFactures',
-            'recentMouvements'
+            'month', 'prevStart', 'isCurrentMonth',
+            'caMois', 'caMoisPrec', 'variationCa', 'nbRecusMois', 'variationRecus',
+            'encaisseMois', 'nbDevisMois', 'montantDevisMois', 'caAujourdhui', 'caAnnee',
+            'resteAEncaisser', 'nbImpayes', 'facturesARelancer',
+            'chartLabels', 'chartRecu', 'chartProforma',
+            'produitsCount', 'produitsCritiquesCount', 'valeurStock',
+            'entreesStockMonth', 'sortiesStockMonth', 'produitsCritiques', 'topProduitsSortie',
+            'clientsCount', 'recentFactures'
         ));
     }
 
